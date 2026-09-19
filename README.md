@@ -91,13 +91,13 @@ Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md).
 
 Com janeiro de 2024 a dezembro de 2025, `scripts/preparar_dados_v2.py` gerou localmente `data/voos_vra_derivados.csv` com 1.992.832 linhas, 1.923.336 voos realizados e 69.496 cancelados. O indicador `atraso_chegada_15m` é verdadeiro em 329.739 linhas.
 
-Atrasos em minutos possuem outliers importantes. O projeto seguirá inicialmente com classificação ordinal em cinco faixas de atraso, mantendo a classificação binária como comparação. Os detalhes estão em [`README-classificacao-faixas-atraso.md`](README-classificacao-faixas-atraso.md) e [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
+Atrasos em minutos possuem outliers importantes. O projeto seguirá inicialmente com classificação ordinal em seis faixas de atraso, mantendo a classificação binária como comparação. Os detalhes estão em [`README-classificacao-faixas-atraso.md`](README-classificacao-faixas-atraso.md) e [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
 
 ### Achado: outliers extremos de atraso
 
 Na base derivada de 24 meses, a distribuição das faixas foi calculada somente para voos realizados com atraso de chegada calculável. O relatório local está em `data/distribuicao_faixas_atraso.csv` e pode ser recriado com `python scripts\analisar_faixas_atraso.py`.
 
-Entre os 1.864.195 voos realizados com atraso calculável, 82,31% ficaram na faixa pontual ou até 14 minutos; 8,69% entre 15 e 30 minutos; 3,40% entre 31 e 45 minutos; 1,72% entre 46 e 60 minutos; e 3,88% acima de 60 minutos. Há 59.141 voos realizados sem atraso de chegada calculável.
+Entre os 1.864.195 voos realizados com atraso calculável, 61,96% foram pontuais ou antecipados; 20,35% tiveram atraso inferior a 15 minutos; 8,69% entre 15 e 30 minutos; 3,40% entre 30 e 45 minutos; 1,72% entre 45 e 60 minutos; e 3,88% acima de 60 minutos. Há 59.141 voos realizados sem atraso de chegada calculável.
 
 ## Abrir o notebook no Windows com Anaconda e JupyterLab
 

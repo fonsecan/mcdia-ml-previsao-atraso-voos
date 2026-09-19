@@ -1,7 +1,6 @@
 """Calcula a distribuição das faixas de atraso de chegada."""
 from pathlib import Path
 import json
-import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,15 +9,17 @@ OUTPUT_CSV = ROOT / "data" / "distribuicao_faixas_atraso.csv"
 OUTPUT_JSON = ROOT / "data" / "distribuicao_faixas_atraso.json"
 
 def classificar(valor: float) -> int:
-    if valor < 15:
+    if valor <= 0:
         return 0
-    if valor <= 30:
+    if valor < 15:
         return 1
-    if valor <= 45:
+    if valor <= 30:
         return 2
-    if valor <= 60:
+    if valor <= 45:
         return 3
-    return 4
+    if valor <= 60:
+        return 4
+    return 5
 
 def main() -> None:
     df = pd.read_csv(INPUT, usecols=["realizado", "atraso_chegada_min"])
@@ -27,11 +28,12 @@ def main() -> None:
     atrasos = realizados.loc[calculaveis, "atraso_chegada_min"]
     classes = atrasos.map(classificar)
     nomes = {
-        0: "Pontual ou atraso de 0 a 14 min",
-        1: "Atraso de 15 a 30 min",
-        2: "Atraso de 31 a 45 min",
-        3: "Atraso de 46 a 60 min",
-        4: "Atraso superior a 60 min",
+        0: "Pontual ou antecipado",
+        1: "Atraso inferior a 15 min",
+        2: "Atraso de 15 a 30 min",
+        3: "Atraso superior a 30 até 45 min",
+        4: "Atraso superior a 45 até 60 min",
+        5: "Atraso superior a 60 min",
     }
     contagem = classes.value_counts().sort_index()
     relatorio = pd.DataFrame({
@@ -54,4 +56,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

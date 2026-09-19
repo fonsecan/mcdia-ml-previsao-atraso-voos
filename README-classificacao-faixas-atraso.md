@@ -4,32 +4,33 @@
 
 > No momento da partida prevista, em qual faixa estará o atraso da chegada?
 
-O objetivo inicial será prever a severidade do atraso de chegada de um voo realizado. O modelo deve usar somente informações disponíveis antes do resultado do voo.
+O objetivo é prever a severidade do atraso de chegada de um voo realizado, usando somente informações disponíveis antes do resultado do voo.
 
 ## Variável-alvo
 
-A variável-alvo será construída a partir de:
+A variável é calculada por:
 
 `atraso_chegada_min = chegada_real - chegada_prevista`
 
-As categorias são mutuamente exclusivas:
+As seis categorias são mutuamente exclusivas:
 
-| Código | Categoria |
-|---:|---|
-| 0 | pontual ou atraso de 0 a 14 minutos |
-| 1 | atraso de 15 a 30 minutos |
-| 2 | atraso de 31 a 45 minutos |
-| 3 | atraso de 46 a 60 minutos |
-| 4 | atraso superior a 60 minutos |
+| Código | Regra | Interpretação |
+|---:|---|---|
+| 0 | `atraso <= 0` | pontual ou chegada antecipada |
+| 1 | `0 < atraso < 15` | atraso inferior a 15 minutos |
+| 2 | `15 <= atraso <= 30` | atraso de 15 a 30 minutos |
+| 3 | `30 < atraso <= 45` | atraso superior a 30 até 45 minutos |
+| 4 | `45 < atraso <= 60` | atraso superior a 45 até 60 minutos |
+| 5 | `atraso > 60` | atraso superior a 60 minutos |
 
-A categoria 0 também inclui chegadas antecipadas, isto é, atrasos negativos.
+Como os atrasos são armazenados com uma casa decimal, as regras matemáticas evitam ambiguidades nos limites. Por exemplo, 14,9 minutos pertence à segunda faixa e 15,0 minutos pertence à terceira.
 
 ## Registros utilizados
 
 - Somente voos com `realizado = True`.
-- Voos cancelados ficam fora deste alvo, pois não possuem atraso de chegada comparável.
+- Voos cancelados ficam fora deste alvo.
 - Voos sem horário previsto ou real de chegada não entram na distribuição.
-- A regra de classificação deve ser aplicada sem arredondamentos adicionais.
+- Chegadas antecipadas são consideradas pontuais.
 
 ## Natureza do problema
 
@@ -57,7 +58,7 @@ Não devem ser usadas variáveis preenchidas depois do voo, como horário real d
 
 ## Avaliação
 
-A distribuição das classes deve ser examinada antes do treinamento. Se alguma faixa for muito rara, serão consideradas a coleta de mais meses, pesos de classe ou a união de faixas.
+A distribuição das classes deve ser examinada antes do treinamento. A base de 24 meses contém exemplos suficientes para todas as faixas, mas a classe de 46 a 60 minutos é a menor.
 
 Métricas previstas:
 
@@ -73,7 +74,6 @@ A divisão será temporal: meses mais antigos para treino, meses seguintes para 
 
 ## Limitações
 
-Os limites são convenções operacionais. Um voo com 30 minutos e outro com 31 minutos ficam em classes diferentes, embora sejam casos próximos. Por isso também será útil comparar a classificação com um modelo de regressão que preveja diretamente os minutos de atraso.
+Os limites são convenções operacionais. Um voo com 30,0 minutos e outro com 30,1 minutos ficam em classes diferentes, embora sejam casos próximos. Por isso também será útil comparar a classificação com um modelo de regressão que preveja diretamente os minutos de atraso.
 
 A classificação mostra associação e capacidade preditiva. Ela não demonstra que uma variável causou o atraso.
-

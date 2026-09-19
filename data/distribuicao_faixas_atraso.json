@@ -6,30 +6,36 @@
   "faixas": [
     {
       "codigo_faixa": 0,
-      "faixa": "Pontual ou atraso de 0 a 14 min",
-      "quantidade": 1534456,
-      "percentual": 82.31198989376111
+      "faixa": "Pontual ou antecipado",
+      "quantidade": 1155083,
+      "percentual": 61.96149008016865
     },
     {
       "codigo_faixa": 1,
+      "faixa": "Atraso inferior a 15 min",
+      "quantidade": 379373,
+      "percentual": 20.350499813592464
+    },
+    {
+      "codigo_faixa": 2,
       "faixa": "Atraso de 15 a 30 min",
       "quantidade": 161959,
       "percentual": 8.687878682219402
     },
     {
-      "codigo_faixa": 2,
-      "faixa": "Atraso de 31 a 45 min",
+      "codigo_faixa": 3,
+      "faixa": "Atraso superior a 30 até 45 min",
       "quantidade": 63343,
       "percentual": 3.397874149431792
     },
     {
-      "codigo_faixa": 3,
-      "faixa": "Atraso de 46 a 60 min",
+      "codigo_faixa": 4,
+      "faixa": "Atraso superior a 45 até 60 min",
       "quantidade": 32026,
       "percentual": 1.7179533256982236
     },
     {
-      "codigo_faixa": 4,
+      "codigo_faixa": 5,
       "faixa": "Atraso superior a 60 min",
       "quantidade": 72411,
       "percentual": 3.884303948889467
