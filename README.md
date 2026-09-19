@@ -134,3 +134,4 @@ python -m ipykernel install --user --name mcdia-ml --display-name "Python (mcdia
 - **Acentos aparecem quebrados no terminal:** o CSV é UTF-8; o problema é apenas a codificação de exibição do terminal.
 
 
+
