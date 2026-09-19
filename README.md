@@ -184,3 +184,5 @@ O script cria localmente os arquivos de modelagem e a distribuição mensal das 
 
 
 Os resultados da primeira execução dos baselines estão em [docs/05-resultados-baseline.md](docs/05-resultados-baseline.md).
+
+A validação progressiva e a comparação com a divisão anterior estão em [docs/06-validacao-progressiva.md](docs/06-validacao-progressiva.md).
