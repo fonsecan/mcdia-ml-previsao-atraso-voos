@@ -5,3 +5,5 @@ __pycache__/
 .ipynb_checkpoints/
 *.pyc
 data/voos_vra_derivados.csv
+data/modelagem_faixas_atraso.csv
+data/distribuicao_mensal_faixas_atraso.csv

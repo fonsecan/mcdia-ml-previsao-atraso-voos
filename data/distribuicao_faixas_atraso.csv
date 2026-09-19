@@ -1,7 +1,7 @@
 codigo_faixa,faixa,quantidade,percentual
-0,Pontual ou antecipado,1155083,61.96149008016865
-1,Atraso inferior a 15 min,379373,20.350499813592464
-2,Atraso de 15 a 30 min,161959,8.687878682219402
-3,Atraso superior a 30 até 45 min,63343,3.397874149431792
-4,Atraso superior a 45 até 60 min,32026,1.7179533256982236
-5,Atraso superior a 60 min,72411,3.884303948889467
+0,Pontual ou antecipado,1155076,61.96148019723375
+1,Atraso inferior a 15 min,379371,20.350512610343184
+2,Atraso de 15 a 30 min,161958,8.687876304055823
+3,Atraso superior a 30 até 45 min,63342,3.397840556511589
+4,Atraso superior a 45 até 60 min,32026,1.717963462834141
+5,Atraso superior a 60 min,72411,3.8843268690215127

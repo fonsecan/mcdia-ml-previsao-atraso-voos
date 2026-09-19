@@ -97,7 +97,7 @@ Atrasos em minutos possuem outliers importantes. O projeto seguirá inicialmente
 
 Na base derivada de 24 meses, a distribuição das faixas foi calculada somente para voos realizados com atraso de chegada calculável. O relatório local está em `data/distribuicao_faixas_atraso.csv` e pode ser recriado com `python scripts\analisar_faixas_atraso.py`.
 
-Entre os 1.864.195 voos realizados com atraso calculável, 61,96% foram pontuais ou antecipados; 20,35% tiveram atraso inferior a 15 minutos; 8,69% entre 15 e 30 minutos; 3,40% entre 30 e 45 minutos; 1,72% entre 45 e 60 minutos; e 3,88% acima de 60 minutos. Há 59.141 voos realizados sem atraso de chegada calculável.
+Entre os 1.864.184 voos realizados com atraso calculável, 61,96% foram pontuais ou antecipados; 20,35% tiveram atraso inferior a 15 minutos; 8,69% entre 15 e 30 minutos; 3,40% entre 30 e 45 minutos; 1,72% entre 45 e 60 minutos; e 3,88% acima de 60 minutos. Todos os voos realizados dentro da janela temporal tiveram atraso de chegada calculável; cancelados e registros fora da janela foram excluídos da modelagem.
 
 ## Abrir o notebook no Windows com Anaconda e JupyterLab
 
@@ -139,7 +139,7 @@ python scripts\preparar_dados_v2.py
 jupyter lab
 ```
 
-7. No navegador, abra `notebooks\00_entendimento_do_dataset.ipynb`.
+7. No navegador, abra `notebooks\00_entendimento_do_dataset.ipynb` ou `notebooks\01_modelagem_faixas_atraso.ipynb`.
 8. No canto superior direito, selecione o kernel do ambiente `mcdia-ml-voos`. Se ele não aparecer, execute no Anaconda Prompt:
 
 ```powershell
@@ -170,5 +170,15 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 
 
 
+
+
+
+## Preparar a base de modelagem
+
+Depois de gerar o dataset derivado, prepare a base usada no primeiro modelo.
+
+    python scripts\preparar_modelagem.py
+
+O script cria localmente os arquivos de modelagem e a distribuição mensal das seis classes. Abra então o notebook notebooks/01_modelagem_faixas_atraso.ipynb. Ele usa treino de janeiro de 2024 a junho de 2025, validação de julho a setembro de 2025 e teste de outubro a dezembro de 2025.
 
 

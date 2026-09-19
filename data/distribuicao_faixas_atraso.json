@@ -1,44 +1,44 @@
 {
   "linhas_totais": 1992832,
-  "voos_realizados": 1923336,
-  "voos_realizados_com_atraso_calculavel": 1864195,
-  "voos_realizados_sem_atraso_calculavel": 59141,
+  "voos_realizados": 1864184,
+  "voos_realizados_com_atraso_calculavel": 1864184,
+  "voos_realizados_sem_atraso_calculavel": 0,
   "faixas": [
     {
       "codigo_faixa": 0,
       "faixa": "Pontual ou antecipado",
-      "quantidade": 1155083,
-      "percentual": 61.96149008016865
+      "quantidade": 1155076,
+      "percentual": 61.96148019723375
     },
     {
       "codigo_faixa": 1,
       "faixa": "Atraso inferior a 15 min",
-      "quantidade": 379373,
-      "percentual": 20.350499813592464
+      "quantidade": 379371,
+      "percentual": 20.350512610343184
     },
     {
       "codigo_faixa": 2,
       "faixa": "Atraso de 15 a 30 min",
-      "quantidade": 161959,
-      "percentual": 8.687878682219402
+      "quantidade": 161958,
+      "percentual": 8.687876304055823
     },
     {
       "codigo_faixa": 3,
       "faixa": "Atraso superior a 30 até 45 min",
-      "quantidade": 63343,
-      "percentual": 3.397874149431792
+      "quantidade": 63342,
+      "percentual": 3.397840556511589
     },
     {
       "codigo_faixa": 4,
       "faixa": "Atraso superior a 45 até 60 min",
       "quantidade": 32026,
-      "percentual": 1.7179533256982236
+      "percentual": 1.717963462834141
     },
     {
       "codigo_faixa": 5,
       "faixa": "Atraso superior a 60 min",
       "quantidade": 72411,
-      "percentual": 3.884303948889467
+      "percentual": 3.8843268690215127
     }
   ]
 }

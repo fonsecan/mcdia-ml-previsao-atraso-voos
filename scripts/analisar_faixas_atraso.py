@@ -22,9 +22,13 @@ def classificar(valor: float) -> int:
     return 5
 
 def main() -> None:
-    df = pd.read_csv(INPUT, usecols=["realizado", "atraso_chegada_min"])
+    df = pd.read_csv(INPUT, usecols=["realizado", "atraso_chegada_min", "partida_prevista"])
     realizados = df[df["realizado"].fillna(False)].copy()
+    realizados["partida_prevista"] = pd.to_datetime(realizados["partida_prevista"], errors="coerce")
+    janela = realizados["partida_prevista"].between("2024-01-01", "2025-12-31 23:59:59")
+    realizados = realizados[janela].copy()
     calculaveis = realizados["atraso_chegada_min"].notna()
+    ausentes = int((~calculaveis).sum())
     atrasos = realizados.loc[calculaveis, "atraso_chegada_min"]
     classes = atrasos.map(classificar)
     nomes = {
@@ -47,12 +51,12 @@ def main() -> None:
         "linhas_totais": int(len(df)),
         "voos_realizados": int(len(realizados)),
         "voos_realizados_com_atraso_calculavel": int(len(atrasos)),
-        "voos_realizados_sem_atraso_calculavel": int((~calculaveis).sum()),
+        "voos_realizados_sem_atraso_calculavel": ausentes,
         "faixas": relatorio.to_dict(orient="records"),
     }
     OUTPUT_JSON.write_text(json.dumps(resumo, ensure_ascii=False, indent=2), encoding="utf-8")
     print(relatorio.to_string(index=False))
-    print(f"Realizados sem atraso calculável: {int((~calculaveis).sum())}")
+    print(f"Realizados sem atraso calculável: {ausentes}")
 
 if __name__ == "__main__":
     main()
