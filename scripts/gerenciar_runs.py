@@ -21,6 +21,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 HISTORICO = RUNS / "historico" / "validacao_progressiva_2024_2025.json"
+NOTEBOOK_TEMPLATE = ROOT / "notebooks" / "templates" / "modelagem_run.ipynb"
 CLASSES = list(range(6))
 FEATURES_CATEGORICAS = [
     "companhia_icao", "origem_icao", "destino_icao", "codigo_tipo_linha",
@@ -69,6 +70,15 @@ def write_json(path: Path, value: dict) -> None:
 
 def write_yaml(path: Path, value: dict) -> None:
     path.write_text(yaml.safe_dump(value, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+
+def generate_notebook(folder: Path) -> None:
+    """Generate a run-specific notebook from the versioned template."""
+    if not NOTEBOOK_TEMPLATE.exists():
+        raise FileNotFoundError(f"Template de notebook ausente: {NOTEBOOK_TEMPLATE}")
+    relative_run = folder.relative_to(ROOT).as_posix()
+    text = NOTEBOOK_TEMPLATE.read_text(encoding="utf-8").replace("__RUN_DIR__", relative_run)
+    (folder / "run.ipynb").write_text(text, encoding="utf-8")
 
 
 def sha256(path: Path) -> str:
@@ -166,6 +176,7 @@ def import_historical(login: str) -> None:
             raise ValueError(f"Numeração inesperada: {folder.name}")
         spec = definition(modelo, fold, login, "codex")
         write_yaml(folder / "run.yaml", spec)
+        generate_notebook(folder)
         write_json(folder / "manifest.json", {
             "schema_version": 1,
             "run_number": folder.name,
@@ -210,6 +221,7 @@ def create_from_template(template: Path, login: str, executor: str) -> None:
     spec["executado_por"] = {"github_login": login, "executor": executor}
     folder = reserve_folder()
     write_yaml(folder / "run.yaml", spec)
+    generate_notebook(folder)
     print(f"Criada {folder.relative_to(ROOT).as_posix()}/run.yaml")
 
 

@@ -1,6 +1,6 @@
 # Runs de treinamento
 
-Cada pasta numerada representa **um modelo treinado e avaliado em uma janela temporal**. O número é sequencial e não deve ser reutilizado. A definição fica em `run.yaml` antes da execução; métricas e outros arquivos são gerados depois.
+Cada pasta numerada representa **um modelo treinado e avaliado em uma janela temporal**. O notebook específico da pasta é gerado a partir do template notebooks/templates/modelagem_run.ipynb. O número é sequencial e não deve ser reutilizado. A definição fica em `run.yaml` antes da execução; métricas e outros arquivos são gerados depois.
 
 ## Identidade de quem executou
 
@@ -17,6 +17,7 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 | `classification_report.json` | Precisão, recall e F1 por faixa nas novas runs. |
 | `confusion_matrix.csv` | Erros entre as seis faixas nas novas runs. |
 | `summary.md` | Resumo legível do resultado. |
+| `run.ipynb` | Notebook gerado a partir do template para reproduzir aquela configuração. |
 | `execution.log` | Avisos e erros de novas runs; arquivo local, ignorado pelo Git. |
 
 O dataset grande, modelos serializados e previsões individuais não são versionados. `run.yaml`, manifestos, métricas e resumos pequenos são versionados para permitir a leitura no GitHub. Uma pasta iniciada não é reutilizada: uma repetição recebe outro número.
@@ -30,7 +31,7 @@ O dataset grande, modelos serializados e previsões individuais não são versio
 | Validação abr–jun/2025 | `000009` | `000010` | `000011` | `000012` |
 | Teste jul–dez/2025 | `000013` | `000014` | `000015` | `000016` |
 
-Essas pastas foram **importadas** do resultado agregado preservado em `runs/historico/validacao_progressiva_2024_2025.json`. A configuração foi reconstruída do script original de avaliação. Não foram registrados individualmente na época: horário da execução, duração, hash do dataset, logs, relatórios por classe e matrizes de confusão. Os manifestos deixam esses campos vazios; não representam uma nova execução.
+Essas pastas foram **importadas** do resultado agregado preservado em `runs/historico/validacao_progressiva_2024_2025.json`. A configuração foi reconstruída do script original de avaliação. Os notebooks históricos são reproduções disponíveis, mas não foram executados durante a importação. Não foram registrados individualmente na época: horário da execução, duração, hash do dataset, logs, relatórios por classe e matrizes de confusão. Os manifestos deixam esses campos vazios; não representam uma nova execução.
 
 ## Criar e executar uma nova run
 
