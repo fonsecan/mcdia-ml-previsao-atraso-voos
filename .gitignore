@@ -7,3 +7,8 @@ __pycache__/
 data/voos_vra_derivados.csv
 data/modelagem_faixas_atraso.csv
 data/distribuicao_mensal_faixas_atraso.csv
+/runs/.sequence/
+/runs/[0-9]*/execution.log
+/runs/[0-9]*/run.lock
+/runs/[0-9]*/predictions.csv
+/runs/[0-9]*/model.joblib

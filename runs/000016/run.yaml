@@ -1,0 +1,47 @@
+schema_version: 1
+estudo: faixas_atraso_chegada_v1
+nome: teste_jul_dez_2025-hist_gradient_boosting
+executado_por:
+  github_login: fonsecan
+  executor: codex
+dataset:
+  arquivo: data/modelagem_faixas_atraso.csv
+  fonte: VRA/ANAC
+  metadados: data/amostra_metadata.json
+  periodo: 2024-01 a 2025-12
+alvo:
+  coluna: faixa_atraso
+  definicao: seis_faixas_v1
+divisao:
+  nome: teste_jul_dez_2025
+  papel: teste_final
+  treino_inicio: '2024-01-01'
+  treino_fim_exclusivo: '2025-07-01'
+  avaliacao_inicio: '2025-07-01'
+  avaliacao_fim_exclusivo: '2026-01-01'
+variaveis:
+  categoricas:
+  - companhia_icao
+  - origem_icao
+  - destino_icao
+  - codigo_tipo_linha
+  - modelo_equipamento
+  - periodo_dia
+  numericas:
+  - numero_assentos
+  - ano
+  - mes
+  - dia_semana
+  - hora_prevista
+  - fim_de_semana
+modelo:
+  algoritmo: hist_gradient_boosting
+  preprocessamento: target_encoding_multiclasse_cv5_smooth20_mediana_numericas
+  parametros:
+    max_iter: 200
+    learning_rate: 0.08
+    max_leaf_nodes: 31
+    min_samples_leaf: 50
+    l2_regularization: 1.0
+    class_weight: balanced
+    random_state: 42

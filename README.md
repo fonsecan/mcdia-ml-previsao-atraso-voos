@@ -186,3 +186,7 @@ O script cria localmente os arquivos de modelagem e a distribuição mensal das 
 Os resultados da primeira execução dos baselines estão em [docs/05-resultados-baseline.md](docs/05-resultados-baseline.md).
 
 A validação progressiva e a comparação com a divisão anterior estão em [docs/06-validacao-progressiva.md](docs/06-validacao-progressiva.md).
+
+## Histórico das runs de treinamento
+
+As 16 combinações de modelo e janela da validação progressiva foram importadas para pastas numeradas em `runs/`. Cada pasta contém sua definição, manifesto, métricas e resumo. Consulte [runs/README.md](runs/README.md) para entender os arquivos e criar novas runs.

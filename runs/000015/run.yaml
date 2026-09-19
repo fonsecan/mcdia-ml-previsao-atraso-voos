@@ -1,0 +1,46 @@
+schema_version: 1
+estudo: faixas_atraso_chegada_v1
+nome: teste_jul_dez_2025-random_forest
+executado_por:
+  github_login: fonsecan
+  executor: codex
+dataset:
+  arquivo: data/modelagem_faixas_atraso.csv
+  fonte: VRA/ANAC
+  metadados: data/amostra_metadata.json
+  periodo: 2024-01 a 2025-12
+alvo:
+  coluna: faixa_atraso
+  definicao: seis_faixas_v1
+divisao:
+  nome: teste_jul_dez_2025
+  papel: teste_final
+  treino_inicio: '2024-01-01'
+  treino_fim_exclusivo: '2025-07-01'
+  avaliacao_inicio: '2025-07-01'
+  avaliacao_fim_exclusivo: '2026-01-01'
+variaveis:
+  categoricas:
+  - companhia_icao
+  - origem_icao
+  - destino_icao
+  - codigo_tipo_linha
+  - modelo_equipamento
+  - periodo_dia
+  numericas:
+  - numero_assentos
+  - ano
+  - mes
+  - dia_semana
+  - hora_prevista
+  - fim_de_semana
+modelo:
+  algoritmo: random_forest
+  preprocessamento: ordinal_todas_colunas_moda
+  parametros:
+    n_estimators: 100
+    max_depth: 20
+    min_samples_leaf: 10
+    class_weight: balanced_subsample
+    n_jobs: -1
+    random_state: 42

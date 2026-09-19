@@ -1,0 +1,414 @@
+"""Cria, executa e importa runs individuais de modelagem.
+
+Uso: python scripts/gerenciar_runs.py {criar,executar,importar-historico} ...
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import time
+import warnings
+from datetime import datetime, timezone
+from pathlib import Path
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
+RUNS = ROOT / "runs"
+HISTORICO = RUNS / "historico" / "validacao_progressiva_2024_2025.json"
+CLASSES = list(range(6))
+FEATURES_CATEGORICAS = [
+    "companhia_icao", "origem_icao", "destino_icao", "codigo_tipo_linha",
+    "modelo_equipamento", "periodo_dia",
+]
+FEATURES_NUMERICAS = [
+    "numero_assentos", "ano", "mes", "dia_semana", "hora_prevista", "fim_de_semana",
+]
+PARAMETROS = {
+    "baseline": {"strategy": "most_frequent"},
+    "regressao_logistica": {"max_iter": 300, "class_weight": "balanced", "solver": "lbfgs"},
+    "random_forest": {
+        "n_estimators": 100, "max_depth": 20, "min_samples_leaf": 10,
+        "class_weight": "balanced_subsample", "n_jobs": -1, "random_state": 42,
+    },
+    "hist_gradient_boosting": {
+        "max_iter": 200, "learning_rate": 0.08, "max_leaf_nodes": 31,
+        "min_samples_leaf": 50, "l2_regularization": 1.0,
+        "class_weight": "balanced", "random_state": 42,
+    },
+}
+PREPROCESSAMENTO = {
+    "baseline": "nenhum",
+    "regressao_logistica": "one_hot_categoricas_mediana_numericas",
+    "random_forest": "ordinal_todas_colunas_moda",
+    "hist_gradient_boosting": "target_encoding_multiclasse_cv5_smooth20_mediana_numericas",
+}
+FOLDS = [
+    ("fold_1", "validacao", "2024-01-01", "2024-10-01", "2025-01-01"),
+    ("fold_2", "validacao", "2024-01-01", "2025-01-01", "2025-04-01"),
+    ("fold_3", "validacao", "2024-01-01", "2025-04-01", "2025-07-01"),
+    ("teste_jul_dez_2025", "teste_final", "2024-01-01", "2025-07-01", "2026-01-01"),
+]
+MODELOS = list(PARAMETROS)
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def write_json(path: Path, value: dict) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def write_yaml(path: Path, value: dict) -> None:
+    path.write_text(yaml.safe_dump(value, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def github_login() -> str:
+    result = subprocess.run(
+        ["gh", "api", "user", "--jq", ".login"], capture_output=True, text=True,
+        encoding="utf-8", timeout=15, check=True,
+    )
+    login = result.stdout.strip()
+    if not login:
+        raise ValueError("O gh não retornou um login GitHub.")
+    return login
+
+
+def definition(modelo: str, fold: tuple[str, str, str, str, str], login: str,
+               executor: str) -> dict:
+    nome_fold, papel, treino_inicio, treino_fim, avaliacao_fim = fold
+    return {
+        "schema_version": 1,
+        "estudo": "faixas_atraso_chegada_v1",
+        "nome": f"{nome_fold}-{modelo}",
+        "executado_por": {"github_login": login, "executor": executor},
+        "dataset": {
+            "arquivo": "data/modelagem_faixas_atraso.csv",
+            "fonte": "VRA/ANAC",
+            "metadados": "data/amostra_metadata.json",
+            "periodo": "2024-01 a 2025-12",
+        },
+        "alvo": {"coluna": "faixa_atraso", "definicao": "seis_faixas_v1"},
+        "divisao": {
+            "nome": nome_fold,
+            "papel": papel,
+            "treino_inicio": treino_inicio,
+            "treino_fim_exclusivo": treino_fim,
+            "avaliacao_inicio": treino_fim,
+            "avaliacao_fim_exclusivo": avaliacao_fim,
+        },
+        "variaveis": {
+            "categoricas": FEATURES_CATEGORICAS,
+            "numericas": FEATURES_NUMERICAS,
+        },
+        "modelo": {
+            "algoritmo": modelo,
+            "preprocessamento": PREPROCESSAMENTO[modelo],
+            "parametros": PARAMETROS[modelo],
+        },
+    }
+
+
+def reserve_folder() -> Path:
+    RUNS.mkdir(exist_ok=True)
+    reservations = RUNS / ".sequence"
+    reservations.mkdir(exist_ok=True)
+    used = [int(p.name) for base in (RUNS, reservations)
+            for p in base.iterdir() if p.is_dir() and p.name.isdigit()]
+    number = max(used, default=0) + 1
+    while True:
+        name = f"{number:06d}"
+        try:
+            (reservations / name).mkdir()
+            folder = RUNS / name
+            folder.mkdir()
+            return folder
+        except FileExistsError:
+            number += 1
+
+
+def import_historical(login: str) -> None:
+    source = ROOT / "artifacts" / "resultados_validacao_progressiva.json"
+    if not source.exists():
+        raise FileNotFoundError(f"Resultado histórico ausente: {source}")
+    if HISTORICO.exists() or any((RUNS / f"{i:06d}").exists() for i in range(1, 17)):
+        raise FileExistsError("A importação histórica já existe; nenhuma pasta foi alterada.")
+    data = json.loads(source.read_text(encoding="utf-8"))
+    records = data["folds"]
+    expected = [(fold[0], modelo) for fold in FOLDS for modelo in MODELOS]
+    actual = [(row["periodo"], row["modelo"]) for row in records]
+    if actual != expected:
+        raise ValueError("As 16 combinações no JSON não coincidem com o protocolo esperado.")
+    HISTORICO.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, HISTORICO)
+    source_hash = sha256(HISTORICO)
+    for index, (fold_name, modelo) in enumerate(expected, start=1):
+        row = records[index - 1]
+        fold = next(item for item in FOLDS if item[0] == fold_name)
+        folder = reserve_folder()
+        if folder.name != f"{index:06d}":
+            raise ValueError(f"Numeração inesperada: {folder.name}")
+        spec = definition(modelo, fold, login, "codex")
+        write_yaml(folder / "run.yaml", spec)
+        write_json(folder / "manifest.json", {
+            "schema_version": 1,
+            "run_number": folder.name,
+            "status": "importada_historicamente",
+            "imported_at_utc": utc_now(),
+            "executed_at_utc": None,
+            "duration_seconds": None,
+            "code_commit_at_execution": None,
+            "dataset_sha256_at_execution": None,
+            "definition_origin": "reconstruida_do_script_historico",
+            "definition_source": "scripts/avaliar_validacao_progressiva.py",
+            "github_login_verification": "confirmado_no_gh_na_importacao; sem_registro_da_sessao_original",
+            "metrics_source": str(HISTORICO.relative_to(ROOT)).replace("\\", "/"),
+            "metrics_source_sha256": source_hash,
+            "missing_artifacts": [
+                "run.effective.yaml", "execution.log", "confusion_matrix.csv",
+                "classification_report.json",
+            ],
+        })
+        metrics = {
+            "accuracy": row["accuracy"],
+            "balanced_accuracy": row["balanced_accuracy"],
+            "macro_f1": row["macro_f1"],
+        }
+        write_json(folder / "metrics.json", metrics)
+        (folder / "summary.md").write_text(
+            f"# Run {folder.name}: {modelo} / {fold_name}\n\n"
+            "Resultado importado do relatório agregado da validação progressiva. "
+            "A configuração foi reconstruída do script original. "
+            "Horários, duração, hash do dataset e logs desta execução não foram registrados.\n\n"
+            f"- Acurácia: {metrics['accuracy']:.4f}\n"
+            f"- Balanced accuracy: {metrics['balanced_accuracy']:.4f}\n"
+            f"- Macro-F1: {metrics['macro_f1']:.4f}\n",
+            encoding="utf-8",
+        )
+    print("16 runs históricas importadas em runs/000001 a runs/000016.")
+
+
+def create_from_template(template: Path, login: str, executor: str) -> None:
+    spec = yaml.safe_load(template.read_text(encoding="utf-8"))
+    validate_spec(spec)
+    spec["executado_por"] = {"github_login": login, "executor": executor}
+    folder = reserve_folder()
+    write_yaml(folder / "run.yaml", spec)
+    print(f"Criada {folder.relative_to(ROOT).as_posix()}/run.yaml")
+
+
+def validate_spec(spec: dict) -> None:
+    if spec.get("schema_version") != 1:
+        raise ValueError("schema_version deve ser 1.")
+    actor = spec.get("executado_por", {})
+    if not actor.get("github_login") or actor.get("executor") not in {"manual", "codex"}:
+        raise ValueError("executado_por deve informar login GitHub e executor.")
+    model = spec.get("modelo", {}).get("algoritmo")
+    if model not in MODELOS:
+        raise ValueError(f"Modelo inválido: {model}")
+    if spec["modelo"].get("preprocessamento") != PREPROCESSAMENTO[model]:
+        raise ValueError("Pré-processamento incompatível com o modelo.")
+    if spec.get("alvo", {}).get("definicao") != "seis_faixas_v1":
+        raise ValueError("Definição do alvo desconhecida.")
+    if spec["alvo"].get("coluna") != "faixa_atraso":
+        raise ValueError("Coluna do alvo incompatível com o executor.")
+    if spec.get("variaveis") != {"categoricas": FEATURES_CATEGORICAS, "numericas": FEATURES_NUMERICAS}:
+        raise ValueError("Lista de variáveis diferente da versão implementada.")
+    split = spec["divisao"]
+    if not (split["treino_inicio"] < split["treino_fim_exclusivo"] <=
+            split["avaliacao_inicio"] < split["avaliacao_fim_exclusivo"]):
+        raise ValueError("Intervalos temporais inválidos ou sobrepostos.")
+    if spec["dataset"]["arquivo"] != "data/modelagem_faixas_atraso.csv":
+        raise ValueError("Arquivo de entrada diferente da versão implementada.")
+
+
+def build_model(spec: dict):
+    from sklearn.compose import ColumnTransformer
+    from sklearn.dummy import DummyClassifier
+    from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+    from sklearn.impute import SimpleImputer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, TargetEncoder
+
+    model = spec["modelo"]["algoritmo"]
+    params = spec["modelo"]["parametros"]
+    if model == "baseline":
+        return DummyClassifier(**params)
+    if model == "regressao_logistica":
+        pre = ColumnTransformer([
+            ("categoricas", Pipeline([
+                ("imputacao", SimpleImputer(strategy="most_frequent")),
+                ("one_hot", OneHotEncoder(handle_unknown="ignore")),
+            ]), FEATURES_CATEGORICAS),
+            ("numericas", SimpleImputer(strategy="median"), FEATURES_NUMERICAS),
+        ])
+        estimator = LogisticRegression(**params)
+    elif model == "random_forest":
+        pre = Pipeline([
+            ("imputacao", SimpleImputer(strategy="most_frequent")),
+            ("ordinal", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
+        ])
+        estimator = RandomForestClassifier(**params)
+    else:
+        pre = ColumnTransformer([
+            ("categoricas", Pipeline([
+                ("imputacao", SimpleImputer(strategy="most_frequent")),
+                ("target_encoding", TargetEncoder(
+                    target_type="multiclass", smooth=20.0, cv=5, random_state=42,
+                )),
+            ]), FEATURES_CATEGORICAS),
+            ("numericas", SimpleImputer(strategy="median"), FEATURES_NUMERICAS),
+        ])
+        estimator = HistGradientBoostingClassifier(**params)
+    return Pipeline([("preprocessamento", pre), ("classificador", estimator)])
+
+
+def execute(folder: Path) -> None:
+    import pandas as pd
+    import sklearn
+    from sklearn.metrics import (
+        accuracy_score, balanced_accuracy_score, classification_report,
+        confusion_matrix, f1_score,
+    )
+
+    folder = folder.resolve()
+    if folder.parent != RUNS.resolve() or not folder.name.isdigit():
+        raise ValueError("Informe uma pasta numerada diretamente dentro de runs/.")
+    if (folder / "manifest.json").exists() or (folder / "run.lock").exists():
+        raise ValueError("Esta pasta já foi executada ou importada. Crie uma nova run.")
+    spec_path = folder / "run.yaml"
+    spec = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    validate_spec(spec)
+    if spec["executado_por"]["github_login"] != github_login():
+        raise ValueError("O login GitHub autenticado difere de executado_por.github_login.")
+    dataset = ROOT / spec["dataset"]["arquivo"]
+    if not dataset.exists():
+        raise FileNotFoundError(f"Dataset ausente: {dataset}")
+    dataset_hash = sha256(dataset)
+    with (folder / "run.lock").open("x", encoding="utf-8") as stream:
+        stream.write(utc_now() + "\n")
+    effective = folder / "run.effective.yaml"
+    shutil.copyfile(spec_path, effective)
+    try:
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True,
+            encoding="utf-8", check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        commit = None
+    manifest = {
+        "schema_version": 1, "run_number": folder.name,
+        "status": "executando", "started_at_utc": utc_now(),
+        "code_commit_at_execution": commit,
+        "dataset_sha256_at_execution": dataset_hash,
+        "definition_sha256": sha256(effective),
+        "python_version": sys.version.split()[0],
+        "pandas_version": pd.__version__,
+        "sklearn_version": sklearn.__version__,
+        "executor_sha256": sha256(Path(__file__)),
+    }
+    write_json(folder / "manifest.json", manifest)
+    log = folder / "execution.log"
+    start = time.monotonic()
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            df = pd.read_csv(dataset, low_memory=False)
+            df["data_referencia"] = pd.to_datetime(df["data_referencia"])
+            split = spec["divisao"]
+            train = df[df["data_referencia"].between(
+                split["treino_inicio"], split["treino_fim_exclusivo"], inclusive="left"
+            )]
+            evaluation = df[df["data_referencia"].between(
+                split["avaliacao_inicio"], split["avaliacao_fim_exclusivo"], inclusive="left"
+            )]
+            if train.empty or evaluation.empty:
+                raise ValueError("Treino ou avaliação sem registros.")
+            features = FEATURES_CATEGORICAS + FEATURES_NUMERICAS
+            estimator = build_model(spec)
+            estimator.fit(train[features], train["faixa_atraso"])
+            predicted = estimator.predict(evaluation[features])
+            actual = evaluation["faixa_atraso"]
+            report = classification_report(
+                actual, predicted, labels=CLASSES, output_dict=True, zero_division=0,
+            )
+            matrix = confusion_matrix(actual, predicted, labels=CLASSES)
+            metrics = {
+                "accuracy": float(accuracy_score(actual, predicted)),
+                "balanced_accuracy": float(balanced_accuracy_score(actual, predicted)),
+                "macro_f1": float(f1_score(actual, predicted, average="macro")),
+            }
+            write_json(folder / "metrics.json", metrics)
+            write_json(folder / "classification_report.json", report)
+            pd.DataFrame(matrix, index=CLASSES, columns=CLASSES).to_csv(
+                folder / "confusion_matrix.csv", encoding="utf-8"
+            )
+            warning_lines = [f"{type(item.message).__name__}: {item.message}" for item in caught]
+        duration = round(time.monotonic() - start, 3)
+        log.write_text(
+            f"Treino: {len(train)} registros\nAvaliação: {len(evaluation)} registros\n"
+            + ("\n".join(warning_lines) + "\n" if warning_lines else "Sem avisos.\n"),
+            encoding="utf-8",
+        )
+        manifest.update(
+            status="concluida", finished_at_utc=utc_now(), duration_seconds=duration,
+            train_rows=int(len(train)), evaluation_rows=int(len(evaluation)),
+            warnings=len(warning_lines),
+        )
+        write_json(folder / "manifest.json", manifest)
+        (folder / "summary.md").write_text(
+            f"# Run {folder.name}: {spec['nome']}\n\n"
+            f"- Treino: {len(train)} voos\n- Avaliação: {len(evaluation)} voos\n"
+            f"- Acurácia: {metrics['accuracy']:.4f}\n"
+            f"- Balanced accuracy: {metrics['balanced_accuracy']:.4f}\n"
+            f"- Macro-F1: {metrics['macro_f1']:.4f}\n"
+            f"- Duração: {duration:.1f} segundos\n",
+            encoding="utf-8",
+        )
+        print(f"Run {folder.name} concluída: {metrics}")
+    except Exception as exc:
+        log.write_text(f"{type(exc).__name__}: {exc}\n", encoding="utf-8")
+        manifest.update(status="falhou", finished_at_utc=utc_now(), error=str(exc))
+        write_json(folder / "manifest.json", manifest)
+        raise
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="comando", required=True)
+    importer = sub.add_parser("importar-historico")
+    importer.add_argument("--github-login", help="Login GitHub; por padrão, consultar gh api user")
+    creator = sub.add_parser("criar")
+    creator.add_argument("template", type=Path)
+    creator.add_argument("--github-login", help="Login GitHub; por padrão, consultar gh api user")
+    creator.add_argument("--executor", default="manual", choices=["manual", "codex"])
+    runner = sub.add_parser("executar")
+    runner.add_argument("pasta", type=Path)
+    args = parser.parse_args()
+    if args.comando == "importar-historico":
+        import_historical(args.github_login or github_login())
+    elif args.comando == "criar":
+        create_from_template(args.template, args.github_login or github_login(), args.executor)
+    else:
+        execute(args.pasta)
+
+
+if __name__ == "__main__":
+    main()
