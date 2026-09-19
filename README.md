@@ -23,10 +23,39 @@ O VRA contém companhia, voo, origem, destino, horários previstos e realizados 
 
 - `data/raw/`: CSVs originais baixados pelo script; não versionados.
 - `data/`: amostras derivadas, metadados e dicionários pequenos.
+- `datasets/`: receitas e manifestos de versões imutáveis dos dados.
+- `splits/`: receitas e manifestos das divisões de treino, validação e teste.
 - `docs/`: hipótese, decisões e limitações.
 - `notebooks/`: exploração, qualidade e primeiro modelo.
 - `scripts/`: download e auditoria reproduzíveis.
 - `artifacts/`: gráficos, métricas e modelos locais; não versionados.
+
+## Fluxo reprodutível de datasets, divisões e runs
+
+O fluxo oficial usa versões numeradas para impedir que uma nova publicação da ANAC altere silenciosamente um experimento já registrado.
+
+1. Cada `datasets/dataset-NNNNNN/` contém `dataset.yaml` e `receita.sh`, que definem os CSVs de origem e as transformações. Ao materializar o dataset, o processo registra URL, data, tamanho e SHA-256 de cada arquivo bruto; também registra o hash dos CSVs derivados, as versões de Python e pandas, o commit e os hashes dos scripts usados.
+2. Cada `splits/split-NNNNNN/` define uma divisão temporal de um dataset. A materialização gera `atribuicao_particoes.csv` com a partição de cada `id_registro`, sem duplicar o dataset em três CSVs. O manifesto vincula os hashes da divisão ao dataset exato.
+3. Cada run referencia um `dataset-NNNNNN` e um `split-NNNNNN`. O executor só treina quando os hashes do dataset, do manifesto e da atribuição ainda coincidem.
+
+Para preparar o conjunto inicial de 2024–2025 e as quatro janelas temporais, execute na raiz do projeto:
+
+```bash
+python scripts/gerenciar_datasets.py materializar dataset-000001
+python scripts/gerenciar_divisoes.py materializar split-000001
+python scripts/gerenciar_divisoes.py materializar split-000002
+python scripts/gerenciar_divisoes.py materializar split-000003
+python scripts/gerenciar_divisoes.py materializar split-000004
+```
+
+Antes de uma run, confira a integridade:
+
+```bash
+python scripts/gerenciar_datasets.py verificar dataset-000001
+python scripts/gerenciar_divisoes.py verificar split-000004
+```
+
+Os CSVs brutos e derivados não entram no Git por serem grandes. Versione os arquivos pequenos (`dataset.yaml`, `receita.sh`, `manifest.json`, `split.yaml` e o manifesto da divisão) e armazene os CSVs materializados em local imutável e compartilhado antes de outra pessoa reproduzir uma run. Se algum hash de origem mudar, crie um novo `dataset-NNNNNN`; não sobrescreva um diretório materializado.
 
 ## Primeiro passo executável
 
@@ -59,25 +88,26 @@ conda activate mcdia-ml-voos
 Com o ambiente ativo, instale as dependências. Este bloco pode ser copiado e executado de uma vez:
 
 ```powershell
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.lock
 ```
 
-Baixe os 24 meses, audite os arquivos e gere o CSV derivado. Execute cada bloco separadamente:
+Materialize o dataset e as divisões versionadas. Execute cada bloco separadamente:
 
 ```powershell
-python scripts\baixar_amostra.py --ano 2024 --meses 12
-```
-
-```powershell
-python scripts\baixar_amostra.py --ano 2025 --meses 12
+python scripts\gerenciar_datasets.py materializar dataset-000001
 ```
 
 ```powershell
-python scripts\auditar_amostra_v2.py
+python scripts\gerenciar_divisoes.py materializar split-000001
 ```
 
 ```powershell
-python scripts\preparar_dados_v2.py
+python scripts\gerenciar_divisoes.py materializar split-000002
+```
+
+```powershell
+python scripts\gerenciar_divisoes.py materializar split-000003
+python scripts\gerenciar_divisoes.py materializar split-000004
 ```
 
 Abra o JupyterLab em um comando separado:
@@ -86,7 +116,7 @@ Abra o JupyterLab em um comando separado:
 jupyter lab
 ```
 
-Os scripts registram a URL, a data da coleta e as estatísticas básicas. Eles não alteram os CSVs originais.
+Os scripts registram URL, data, tamanho e SHA-256 de cada coleta, além dos hashes dos artefatos derivados. Um dataset ou split materializado não deve ser alterado.
 ## Desafios já identificados
 
 - O VRA é uma base mensal consolidada e pode ser revisado depois da publicação; cada coleta registra URL, data e tamanho do arquivo.
@@ -130,25 +160,17 @@ cd mcdia-ml-previsao-atraso-voos
 ```powershell
 conda create --name mcdia-ml-voos python=3.11
 conda activate mcdia-ml-voos
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.lock
 ```
 
-5. Baixe os 24 meses e gere o CSV derivado:
+5. Materialize o dataset e as divisões versionadas:
 
 ```powershell
-python scripts\baixar_amostra.py --ano 2024 --meses 12
-```
-
-```powershell
-python scripts\baixar_amostra.py --ano 2025 --meses 12
-```
-
-```powershell
-python scripts\auditar_amostra_v2.py
-```
-
-```powershell
-python scripts\preparar_dados_v2.py
+python scripts\gerenciar_datasets.py materializar dataset-000001
+python scripts\gerenciar_divisoes.py materializar split-000001
+python scripts\gerenciar_divisoes.py materializar split-000002
+python scripts\gerenciar_divisoes.py materializar split-000003
+python scripts\gerenciar_divisoes.py materializar split-000004
 ```
 
 6. Abra o JupyterLab a partir da raiz do projeto:
@@ -218,7 +240,7 @@ Instale as dependências:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.lock
 python -m pip install ipykernel
 ```
 
@@ -230,19 +252,14 @@ python -m ipykernel install --user \
   --display-name "Python (mcdia-ml-voos)"
 ```
 
-Baixe os dados e gere o CSV derivado:
+Materialize o dataset e as divisões versionadas:
 
 ```bash
-python scripts/baixar_amostra.py --ano 2024 --meses 12
-python scripts/baixar_amostra.py --ano 2025 --meses 12
-python scripts/auditar_amostra_v2.py
-python scripts/preparar_dados_v2.py
-```
-
-Opcionalmente, prepare também a base de modelagem:
-
-```bash
-python scripts/preparar_modelagem.py
+python scripts/gerenciar_datasets.py materializar dataset-000001
+python scripts/gerenciar_divisoes.py materializar split-000001
+python scripts/gerenciar_divisoes.py materializar split-000002
+python scripts/gerenciar_divisoes.py materializar split-000003
+python scripts/gerenciar_divisoes.py materializar split-000004
 ```
 
 Inicie o JupyterLab a partir da raiz do projeto:
@@ -311,31 +328,17 @@ python -m pip install --upgrade pip
 ```
 
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.lock
 ```
 
-Baixe os 24 meses, audite os arquivos e gere o CSV derivado:
+Materialize o dataset e as divisões versionadas:
 
 ```bash
-python scripts/baixar_amostra.py --ano 2024 --meses 12
-```
-
-```bash
-python scripts/baixar_amostra.py --ano 2025 --meses 12
-```
-
-```bash
-python scripts/auditar_amostra_v2.py
-```
-
-```bash
-python scripts/preparar_dados_v2.py
-```
-
-Prepare a base de modelagem:
-
-```bash
-python scripts/preparar_modelagem.py
+python scripts/gerenciar_datasets.py materializar dataset-000001
+python scripts/gerenciar_divisoes.py materializar split-000001
+python scripts/gerenciar_divisoes.py materializar split-000002
+python scripts/gerenciar_divisoes.py materializar split-000003
+python scripts/gerenciar_divisoes.py materializar split-000004
 ```
 
 Abra o JupyterLab a partir da raiz do projeto:
@@ -359,7 +362,7 @@ deactivate
 Se o terminal for fechado, reative o ambiente entrando novamente na pasta do projeto e executando `source .venv/bin/activate`. O diretório `.venv` é local e não deve ser versionado.
 ## Preparar a base de modelagem
 
-Depois de gerar o dataset derivado, prepare a base usada pelos modelos. Execute no Anaconda Prompt:
+O dataset versionado já gera a base usada pelos modelos. Para preparar uma base temporária, fora do fluxo oficial de runs, execute no Anaconda Prompt:
 
 ```powershell
 python scripts\preparar_modelagem.py

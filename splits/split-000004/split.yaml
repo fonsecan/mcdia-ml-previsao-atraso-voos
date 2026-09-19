@@ -1,0 +1,12 @@
+schema_version: 1
+id: split-000004
+nome: teste_final_jul_dez_2025
+dataset_id: dataset-000001
+dataset_modelagem: datasets/dataset-000001/modelagem_faixas_atraso.csv
+papel_avaliacao: teste_final
+treino:
+  inicio: '2024-01-01'
+  fim_exclusivo: '2025-07-01'
+avaliacao:
+  inicio: '2025-07-01'
+  fim_exclusivo: '2026-01-01'

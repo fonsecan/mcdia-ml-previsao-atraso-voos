@@ -72,10 +72,13 @@ Ative o ambiente:
 conda activate mcdia-ml-voos
 ```
 
-Se a base de modelagem ainda não foi criada:
+Materialize e verifique o dataset e a divisão usados pela run:
 
 ```bat
-python scripts\preparar_modelagem.py
+python scripts\gerenciar_datasets.py materializar dataset-000001
+python scripts\gerenciar_divisoes.py materializar split-000001
+python scripts\gerenciar_datasets.py verificar dataset-000001
+python scripts\gerenciar_divisoes.py verificar split-000001
 ```
 
 Crie uma nova definição a partir do exemplo:
@@ -90,7 +93,7 @@ Abra a pasta numerada informada pelo comando e revise o `run.yaml`. Nele ficam o
 python scripts\gerenciar_runs.py executar runs\000017
 ```
 
-O gerenciador registra a configuração efetiva, o commit do código, o hash do dataset, as métricas, o relatório por classe, a matriz de confusão e um resumo em Markdown. O `gh` autenticado é usado para registrar o login GitHub do executor.
+O gerenciador registra a configuração efetiva, o commit do código, os hashes do dataset e da divisão, as métricas, o relatório por classe, a matriz de confusão e um resumo em Markdown. O `gh` autenticado é usado para registrar o login GitHub do executor.
 
 Para abrir o notebook da run:
 

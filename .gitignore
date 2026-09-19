@@ -12,3 +12,11 @@ data/distribuicao_mensal_faixas_atraso.csv
 /runs/[0-9]*/run.lock
 /runs/[0-9]*/predictions.csv
 /runs/[0-9]*/model.joblib
+/datasets/dataset-*/raw/
+/datasets/dataset-*/download_*.json
+/datasets/dataset-*/auditoria_amostra.json
+/datasets/dataset-*/voos_vra_derivados.csv
+/datasets/dataset-*/modelagem_faixas_atraso.csv
+/datasets/dataset-*/distribuicao_mensal_faixas_atraso.csv
+/splits/split-*/atribuicao_particoes.csv
+/splits/split-*/distribuicao_particoes.csv

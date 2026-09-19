@@ -1,6 +1,7 @@
 """Gera o dataset VRA derivado usando booleanos anuláveis."""
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
 import pandas as pd
@@ -25,12 +26,17 @@ def transform_v2(frame: pd.DataFrame, source: str) -> pd.DataFrame:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-dir", default="data/raw")
+    parser.add_argument("--output", default="data/voos_vra_derivados.csv")
+    args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    paths = sorted((root / "data" / "raw").glob("VRA_*.csv"))
+    paths = sorted((root / args.input_dir).glob("VRA_*.csv"))
     if not paths:
-        raise SystemExit("Nenhum VRA_*.csv em data/raw/.")
+        raise SystemExit(f"Nenhum VRA_*.csv em {args.input_dir}/.")
     result = pd.concat([transform_v2(read_vra(path), path.name) for path in paths], ignore_index=True)
-    output = root / "data" / "voos_vra_derivados.csv"
+    output = root / args.output
+    output.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(output, index=False, encoding="utf-8")
     print(f"Arquivo: {output}")
     print(f"Linhas: {len(result)}")

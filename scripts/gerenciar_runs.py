@@ -1,4 +1,4 @@
-"""Cria, executa e importa runs individuais de modelagem.
+"""Cria, executa, importa e migra runs individuais de modelagem.
 
 Uso: python scripts/gerenciar_runs.py {criar,executar,importar-historico} ...
 """
@@ -20,6 +20,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
+DATASETS = ROOT / "datasets"
+SPLITS = ROOT / "splits"
 HISTORICO = RUNS / "historico" / "validacao_progressiva_2024_2025.json"
 NOTEBOOK_TEMPLATE = ROOT / "notebooks" / "templates" / "modelagem_run.ipynb"
 CLASSES = list(range(6))
@@ -50,10 +52,10 @@ PREPROCESSAMENTO = {
     "hist_gradient_boosting": "target_encoding_multiclasse_cv5_smooth20_mediana_numericas",
 }
 FOLDS = [
-    ("fold_1", "validacao", "2024-01-01", "2024-10-01", "2025-01-01"),
-    ("fold_2", "validacao", "2024-01-01", "2025-01-01", "2025-04-01"),
-    ("fold_3", "validacao", "2024-01-01", "2025-04-01", "2025-07-01"),
-    ("teste_jul_dez_2025", "teste_final", "2024-01-01", "2025-07-01", "2026-01-01"),
+    ("fold_1", "split-000001", "validacao", "2024-01-01", "2024-10-01", "2025-01-01"),
+    ("fold_2", "split-000002", "validacao", "2024-01-01", "2025-01-01", "2025-04-01"),
+    ("fold_3", "split-000003", "validacao", "2024-01-01", "2025-04-01", "2025-07-01"),
+    ("teste_jul_dez_2025", "split-000004", "teste_final", "2024-01-01", "2025-07-01", "2026-01-01"),
 ]
 MODELOS = list(PARAMETROS)
 
@@ -102,20 +104,22 @@ def github_login() -> str:
 
 def definition(modelo: str, fold: tuple[str, str, str, str, str], login: str,
                executor: str) -> dict:
-    nome_fold, papel, treino_inicio, treino_fim, avaliacao_fim = fold
+    nome_fold, split_id, papel, treino_inicio, treino_fim, avaliacao_fim = fold
     return {
         "schema_version": 1,
         "estudo": "faixas_atraso_chegada_v1",
         "nome": f"{nome_fold}-{modelo}",
         "executado_por": {"github_login": login, "executor": executor},
         "dataset": {
-            "arquivo": "data/modelagem_faixas_atraso.csv",
+            "id": "dataset-000001",
+            "arquivo": "datasets/dataset-000001/modelagem_faixas_atraso.csv",
+            "manifesto": "datasets/dataset-000001/manifest.json",
             "fonte": "VRA/ANAC",
-            "metadados": "data/amostra_metadata.json",
             "periodo": "2024-01 a 2025-12",
         },
         "alvo": {"coluna": "faixa_atraso", "definicao": "seis_faixas_v1"},
         "divisao": {
+            "id": split_id,
             "nome": nome_fold,
             "papel": papel,
             "treino_inicio": treino_inicio,
@@ -225,6 +229,31 @@ def create_from_template(template: Path, login: str, executor: str) -> None:
     print(f"Criada {folder.relative_to(ROOT).as_posix()}/run.yaml")
 
 
+def migrate_data_references() -> None:
+    """Vincula runs já versionadas ao dataset e à divisão canônicos."""
+    split_ids = {fold[0]: fold[1] for fold in FOLDS}
+    changed = []
+    for folder in sorted(path for path in RUNS.iterdir() if path.is_dir() and path.name.isdigit()):
+        path = folder / "run.yaml"
+        if not path.exists():
+            continue
+        spec = yaml.safe_load(path.read_text(encoding="utf-8"))
+        split_name = spec.get("divisao", {}).get("nome")
+        if split_name not in split_ids:
+            raise ValueError(f"Run {folder.name} tem divisão sem mapeamento: {split_name}")
+        spec["dataset"] = {
+            "id": "dataset-000001",
+            "arquivo": "datasets/dataset-000001/modelagem_faixas_atraso.csv",
+            "manifesto": "datasets/dataset-000001/manifest.json",
+            "fonte": "VRA/ANAC",
+            "periodo": "2024-01 a 2025-12",
+        }
+        spec["divisao"]["id"] = split_ids[split_name]
+        write_yaml(path, spec)
+        changed.append(folder.name)
+    print("Runs atualizadas: " + (", ".join(changed) if changed else "nenhuma"))
+
+
 def validate_spec(spec: dict) -> None:
     if spec.get("schema_version") != 1:
         raise ValueError("schema_version deve ser 1.")
@@ -246,8 +275,62 @@ def validate_spec(spec: dict) -> None:
     if not (split["treino_inicio"] < split["treino_fim_exclusivo"] <=
             split["avaliacao_inicio"] < split["avaliacao_fim_exclusivo"]):
         raise ValueError("Intervalos temporais inválidos ou sobrepostos.")
-    if spec["dataset"]["arquivo"] != "data/modelagem_faixas_atraso.csv":
-        raise ValueError("Arquivo de entrada diferente da versão implementada.")
+    dataset = spec["dataset"]
+    if dataset.get("id") != "dataset-000001":
+        raise ValueError("Dataset desconhecido; crie um executor compatível para outra versão.")
+    if dataset.get("arquivo") != "datasets/dataset-000001/modelagem_faixas_atraso.csv":
+        raise ValueError("Arquivo de entrada diferente do dataset registrado.")
+    if dataset.get("manifesto") != "datasets/dataset-000001/manifest.json":
+        raise ValueError("Manifesto do dataset incompatível.")
+    split_id = split.get("id", "")
+    if not split_id.startswith("split-") or not split_id.removeprefix("split-").isdigit():
+        raise ValueError("A run deve referenciar uma divisão no formato split-NNNNNN.")
+
+
+def resolve_artifacts(spec: dict) -> tuple[Path, Path, dict, dict]:
+    dataset = spec["dataset"]
+    dataset_manifest_path = ROOT / dataset["manifesto"]
+    if not dataset_manifest_path.exists():
+        raise FileNotFoundError(f"Dataset não materializado: {dataset_manifest_path}")
+    dataset_manifest = json.loads(dataset_manifest_path.read_text(encoding="utf-8"))
+    if dataset_manifest.get("dataset_id") != dataset["id"]:
+        raise ValueError("O manifesto não pertence ao dataset informado na run.")
+    dataset_path = ROOT / dataset["arquivo"]
+    modelagem = dataset_manifest.get("artefatos", {}).get("modelagem", {})
+    if modelagem.get("path") != dataset["arquivo"] or not dataset_path.exists():
+        raise ValueError("Artefato de modelagem ausente ou incompatível com o manifesto do dataset.")
+    if sha256(dataset_path) != modelagem.get("sha256"):
+        raise ValueError("O hash do dataset de modelagem diverge do manifesto.")
+    split_id = spec["divisao"]["id"]
+    split_definition_path = SPLITS / split_id / "split.yaml"
+    if not split_definition_path.exists():
+        raise FileNotFoundError(f"Definição da divisão ausente: {split_definition_path}")
+    split_definition = yaml.safe_load(split_definition_path.read_text(encoding="utf-8"))
+    split = spec["divisao"]
+    if (
+        split_definition.get("dataset_id") != dataset["id"]
+        or split_definition.get("nome") != split.get("nome")
+        or split_definition.get("papel_avaliacao") != split.get("papel")
+        or split_definition.get("treino", {}).get("inicio") != split.get("treino_inicio")
+        or split_definition.get("treino", {}).get("fim_exclusivo") != split.get("treino_fim_exclusivo")
+        or split_definition.get("avaliacao", {}).get("inicio") != split.get("avaliacao_inicio")
+        or split_definition.get("avaliacao", {}).get("fim_exclusivo") != split.get("avaliacao_fim_exclusivo")
+    ):
+        raise ValueError("A janela declarada na run diverge da divisão versionada.")
+    split_manifest_path = SPLITS / split_id / "manifest.json"
+    if not split_manifest_path.exists():
+        raise FileNotFoundError(f"Divisão não materializada: {split_manifest_path}")
+    split_manifest = json.loads(split_manifest_path.read_text(encoding="utf-8"))
+    if split_manifest.get("split_id") != split_id or split_manifest.get("dataset_id") != dataset["id"]:
+        raise ValueError("O manifesto da divisão não corresponde à run.")
+    if split_manifest.get("dataset_manifest_sha256") != sha256(dataset_manifest_path):
+        raise ValueError("O dataset foi alterado desde a materialização da divisão.")
+    if split_manifest.get("dataset_modelagem_sha256") != modelagem.get("sha256"):
+        raise ValueError("A divisão aponta para outra versão do dataset.")
+    assignment_path = ROOT / split_manifest["atribuicao"]["path"]
+    if not assignment_path.exists() or sha256(assignment_path) != split_manifest["atribuicao"]["sha256"]:
+        raise ValueError("A atribuição de partições está ausente ou foi alterada.")
+    return dataset_path, assignment_path, dataset_manifest, split_manifest
 
 
 def build_model(spec: dict):
@@ -310,9 +393,7 @@ def execute(folder: Path) -> None:
     validate_spec(spec)
     if spec["executado_por"]["github_login"] != github_login():
         raise ValueError("O login GitHub autenticado difere de executado_por.github_login.")
-    dataset = ROOT / spec["dataset"]["arquivo"]
-    if not dataset.exists():
-        raise FileNotFoundError(f"Dataset ausente: {dataset}")
+    dataset, assignment_path, dataset_manifest, split_manifest = resolve_artifacts(spec)
     dataset_hash = sha256(dataset)
     with (folder / "run.lock").open("x", encoding="utf-8") as stream:
         stream.write(utc_now() + "\n")
@@ -330,6 +411,11 @@ def execute(folder: Path) -> None:
         "status": "executando", "started_at_utc": utc_now(),
         "code_commit_at_execution": commit,
         "dataset_sha256_at_execution": dataset_hash,
+        "dataset_id": spec["dataset"]["id"],
+        "dataset_manifest_sha256_at_execution": sha256(ROOT / spec["dataset"]["manifesto"]),
+        "split_id": spec["divisao"]["id"],
+        "split_manifest_sha256_at_execution": sha256(SPLITS / spec["divisao"]["id"] / "manifest.json"),
+        "split_assignment_sha256_at_execution": sha256(assignment_path),
         "definition_sha256": sha256(effective),
         "python_version": sys.version.split()[0],
         "pandas_version": pd.__version__,
@@ -343,14 +429,12 @@ def execute(folder: Path) -> None:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             df = pd.read_csv(dataset, low_memory=False)
-            df["data_referencia"] = pd.to_datetime(df["data_referencia"])
-            split = spec["divisao"]
-            train = df[df["data_referencia"].between(
-                split["treino_inicio"], split["treino_fim_exclusivo"], inclusive="left"
-            )]
-            evaluation = df[df["data_referencia"].between(
-                split["avaliacao_inicio"], split["avaliacao_fim_exclusivo"], inclusive="left"
-            )]
+            assignment = pd.read_csv(assignment_path)
+            df = df.merge(assignment, on="id_registro", how="left", validate="one_to_one")
+            if df["particao"].isna().any():
+                raise ValueError("Há registros do dataset sem atribuição de partição.")
+            train = df[df["particao"] == "treino"]
+            evaluation = df[df["particao"] == "avaliacao"]
             if train.empty or evaluation.empty:
                 raise ValueError("Treino ou avaliação sem registros.")
             features = FEATURES_CATEGORICAS + FEATURES_NUMERICAS
@@ -413,11 +497,14 @@ def main() -> None:
     creator.add_argument("--executor", default="manual", choices=["manual", "codex"])
     runner = sub.add_parser("executar")
     runner.add_argument("pasta", type=Path)
+    migrator = sub.add_parser("migrar-referencias-dados")
     args = parser.parse_args()
     if args.comando == "importar-historico":
         import_historical(args.github_login or github_login())
     elif args.comando == "criar":
         create_from_template(args.template, args.github_login or github_login(), args.executor)
+    elif args.comando == "migrar-referencias-dados":
+        migrate_data_references()
     else:
         execute(args.pasta)
 

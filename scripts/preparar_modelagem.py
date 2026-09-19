@@ -1,11 +1,9 @@
 """Prepara dados para prever a faixa de atraso sem usar informação futura."""
+import argparse
 from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-INPUT = ROOT / "data" / "voos_vra_derivados.csv"
-OUTPUT = ROOT / "data" / "modelagem_faixas_atraso.csv"
-MONTHLY_OUTPUT = ROOT / "data" / "distribuicao_mensal_faixas_atraso.csv"
 
 FAIXAS = {
     0: "Pontual ou antecipado",
@@ -30,12 +28,20 @@ def classificar(valor: float) -> int:
     return 5
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", default="data/voos_vra_derivados.csv")
+    parser.add_argument("--output", default="data/modelagem_faixas_atraso.csv")
+    parser.add_argument("--monthly-output", default="data/distribuicao_mensal_faixas_atraso.csv")
+    args = parser.parse_args()
+    input_path = ROOT / args.input
+    output = ROOT / args.output
+    monthly_output = ROOT / args.monthly_output
     columns = [
         "companhia_icao", "origem_icao", "destino_icao",
         "codigo_tipo_linha", "modelo_equipamento", "numero_assentos",
-        "partida_prevista", "realizado", "atraso_chegada_min",
+        "partida_prevista", "realizado", "atraso_chegada_min", "arquivo_origem", "linha_origem",
     ]
-    df = pd.read_csv(INPUT, usecols=columns, low_memory=False)
+    df = pd.read_csv(input_path, usecols=columns, low_memory=False)
     df["partida_prevista"] = pd.to_datetime(df["partida_prevista"], errors="coerce")
     df["realizado"] = df["realizado"].fillna(False).astype(bool)
     janela = df["partida_prevista"].between("2024-01-01", "2025-12-31 23:59:59")
@@ -54,15 +60,18 @@ def main() -> None:
         df["hora_prevista"], bins=[-1, 5, 11, 17, 23],
         labels=["madrugada", "manha", "tarde", "noite"],
     ).astype("string")
+    df["id_registro"] = df["arquivo_origem"].astype("string") + ":" + df["linha_origem"].astype("string")
     features = [
-        "data_referencia", "mes_referencia", "companhia_icao",
+        "id_registro", "data_referencia", "mes_referencia", "companhia_icao",
         "origem_icao", "destino_icao", "codigo_tipo_linha",
         "modelo_equipamento", "numero_assentos", "ano", "mes",
         "dia_semana", "hora_prevista", "fim_de_semana", "periodo_dia",
         "faixa_atraso",
     ]
     modelagem = df[features].sort_values("data_referencia").reset_index(drop=True)
-    modelagem.to_csv(OUTPUT, index=False, encoding="utf-8")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    monthly_output.parent.mkdir(parents=True, exist_ok=True)
+    modelagem.to_csv(output, index=False, encoding="utf-8")
     monthly = (
         modelagem.groupby(["mes_referencia", "faixa_atraso"], observed=False)
         .size().rename("quantidade").reset_index()
@@ -72,10 +81,10 @@ def main() -> None:
         monthly["quantidade"] /
         monthly.groupby("mes_referencia")["quantidade"].transform("sum") * 100
     )
-    monthly.to_csv(MONTHLY_OUTPUT, index=False, encoding="utf-8")
-    print(f"Arquivo de modelagem: {OUTPUT}")
+    monthly.to_csv(monthly_output, index=False, encoding="utf-8")
+    print(f"Arquivo de modelagem: {output}")
     print(f"Linhas elegíveis: {len(modelagem)}")
-    print(f"Distribuição mensal: {MONTHLY_OUTPUT}")
+    print(f"Distribuição mensal: {monthly_output}")
     print(modelagem["faixa_atraso"].value_counts().sort_index().to_string())
 
 if __name__ == "__main__":

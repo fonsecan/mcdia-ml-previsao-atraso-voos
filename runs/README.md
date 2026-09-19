@@ -10,7 +10,7 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 
 | Arquivo | Função |
 |---|---|
-| `run.yaml` | Configuração criada antes da execução: dataset, alvo, datas, variáveis, algoritmo e parâmetros. |
+| `run.yaml` | Configuração criada antes da execução: referências a dataset e divisão, alvo, variáveis, algoritmo e parâmetros. |
 | `run.effective.yaml` | Cópia congelada da configuração efetivamente executada; existe apenas nas novas runs executadas pelo gerenciador. |
 | `manifest.json` | Estado, horários, commit do código, hashes e contagens. |
 | `metrics.json` | Acurácia, balanced accuracy e macro-F1. |
@@ -20,7 +20,9 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 | `run.ipynb` | Notebook gerado a partir do template para reproduzir aquela configuração. |
 | `execution.log` | Avisos e erros de novas runs; arquivo local, ignorado pelo Git. |
 
-O dataset grande, modelos serializados e previsões individuais não são versionados. `run.yaml`, manifestos, métricas e resumos pequenos são versionados para permitir a leitura no GitHub. Uma pasta iniciada não é reutilizada: uma repetição recebe outro número.
+O dataset grande, a atribuição de partições, modelos serializados e previsões individuais não são versionados. `run.yaml`, manifestos, métricas e resumos pequenos são versionados para permitir a leitura no GitHub. Uma pasta iniciada não é reutilizada: uma repetição recebe outro número.
+
+Antes de criar uma run, materialize e verifique o dataset e a divisão referenciados. O executor confere o SHA-256 do CSV, do manifesto do dataset, do manifesto do split e da atribuição de partições. Veja [`datasets/README.md`](../datasets/README.md) e [`splits/README.md`](../splits/README.md).
 
 ## As 16 runs históricas
 
@@ -35,7 +37,7 @@ Essas pastas foram **importadas** do resultado agregado preservado em `runs/hist
 
 ## Criar e executar uma nova run
 
-Abra o **Anaconda Prompt**, ative o ambiente `mcdia-ml-voos` e gere `data/modelagem_faixas_atraso.csv` conforme o README principal. O `gh` deve estar autenticado para preencher automaticamente o login GitHub. Também é possível informar `--github-login` explicitamente.
+Abra o **Anaconda Prompt**, ative o ambiente `mcdia-ml-voos` e materialize o dataset e o split definidos em `run.yaml` conforme o README principal. O `gh` deve estar autenticado para preencher automaticamente o login GitHub. Também é possível informar `--github-login` explicitamente.
 
 Crie uma definição a partir do exemplo:
 
@@ -49,6 +51,6 @@ O comando informa o número criado. Revise o respectivo `run.yaml` e execute a p
 python scripts\gerenciar_runs.py executar runs\000017
 ```
 
-O executor confere se o login autenticado no `gh` corresponde ao `run.yaml`, congela a definição, calcula o SHA-256 do CSV local, registra o commit do código, treina com as datas definidas, avalia as seis classes e escreve os artefatos. A configuração de exemplo usa a primeira janela e Random Forest; edite modelo e datas antes de executar outra experiência.
+O executor confere se o login autenticado no `gh` corresponde ao `run.yaml`, congela a definição, confere o dataset e split registrados, registra o commit do código, treina com as partições congeladas, avalia as seis classes e escreve os artefatos. A configuração de exemplo usa a primeira janela e Random Forest; para usar outra janela, crie uma nova divisão versionada em `splits/`.
 
 As datas `*_fim_exclusivo` não entram no intervalo. A separação de treino e avaliação usa `data_referencia`, mas essa coluna não é entrada do modelo. O alvo vem de `faixa_atraso`; horários reais e atrasos observados não entram nas variáveis explicativas.

@@ -1,6 +1,7 @@
 """Audita CSVs VRA com detecção de codificação e da coluna de situação."""
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import unicodedata
@@ -23,10 +24,14 @@ def ler(path: Path) -> tuple[pd.DataFrame, str]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input-dir", default="data/raw")
+    parser.add_argument("--output", default="data/auditoria_amostra.json")
+    args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    paths = sorted((root / "data" / "raw").glob("*.csv"))
+    paths = sorted((root / args.input_dir).glob("*.csv"))
     if not paths:
-        raise SystemExit("Nenhum CSV em data/raw/. Execute baixar_amostra.py primeiro.")
+        raise SystemExit(f"Nenhum CSV em {args.input_dir}/. Execute baixar_amostra.py primeiro.")
     reports = []
     for path in paths:
         frame, encoding = ler(path)
@@ -44,7 +49,9 @@ def main() -> None:
             report["situacao"] = frame[status].value_counts(dropna=False).astype(int).to_dict()
         reports.append(report)
         print(json.dumps(report, ensure_ascii=False, indent=2))
-    (root / "data" / "auditoria_amostra.json").write_text(json.dumps(reports, ensure_ascii=False, indent=2), encoding="utf-8")
+    output = root / args.output
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(reports, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

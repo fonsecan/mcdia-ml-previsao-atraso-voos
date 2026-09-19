@@ -1,0 +1,12 @@
+schema_version: 1
+id: split-000002
+nome: validacao_temporal_jan_mar_2025
+dataset_id: dataset-000001
+dataset_modelagem: datasets/dataset-000001/modelagem_faixas_atraso.csv
+papel_avaliacao: validacao
+treino:
+  inicio: '2024-01-01'
+  fim_exclusivo: '2025-01-01'
+avaliacao:
+  inicio: '2025-01-01'
+  fim_exclusivo: '2025-04-01'

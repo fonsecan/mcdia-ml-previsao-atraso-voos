@@ -5,15 +5,17 @@ executado_por:
   github_login: fonsecan
   executor: manual
 dataset:
-  arquivo: data/modelagem_faixas_atraso.csv
+  id: dataset-000001
+  arquivo: datasets/dataset-000001/modelagem_faixas_atraso.csv
+  manifesto: datasets/dataset-000001/manifest.json
   fonte: VRA/ANAC
-  metadados: data/amostra_metadata.json
   periodo: 2024-01 a 2025-12
 alvo:
   coluna: faixa_atraso
   definicao: seis_faixas_v1
 divisao:
-  nome: exemplo
+  id: split-000001
+  nome: fold_1
   papel: validacao
   treino_inicio: '2024-01-01'
   treino_fim_exclusivo: '2024-10-01'
