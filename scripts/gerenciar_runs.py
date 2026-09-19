@@ -27,6 +27,14 @@ LEGACY = RUNS / "legacy" / "validacao_progressiva_2024_2025"
 HISTORICO = LEGACY / "historico" / "validacao_progressiva_2024_2025.json"
 NOTEBOOK_TEMPLATE = ROOT / "notebooks" / "templates" / "modelagem_run.ipynb"
 CLASSES = list(range(6))
+FAIXAS = {
+    0: "Pontual ou antecipado",
+    1: "Atraso inferior a 15 min",
+    2: "Atraso de 15 a 30 min",
+    3: "Atraso superior a 30 até 45 min",
+    4: "Atraso superior a 45 até 60 min",
+    5: "Atraso superior a 60 min",
+}
 FEATURES_CATEGORICAS = [
     "companhia_icao", "origem_icao", "destino_icao", "codigo_tipo_linha",
     "modelo_equipamento", "periodo_dia",
@@ -124,6 +132,7 @@ def result_record(folder: Path) -> dict:
         "duracao_segundos": manifest.get("duration_seconds"),
         "concluida_em_utc": manifest.get("finished_at_utc") or manifest.get("imported_at_utc"),
         "code_commit": manifest.get("code_commit_at_execution"),
+        "model_sha256": manifest.get("model_artifact", {}).get("sha256"),
     }
 
 
@@ -131,6 +140,54 @@ def write_result(folder: Path) -> dict:
     result = result_record(folder)
     write_json(folder / "result.json", result)
     return result
+
+
+def write_model_artifacts(folder: Path, estimator, train, spec: dict, manifest: dict) -> dict:
+    """Serializa o pipeline completo e descreve a entrada necessária para inferência."""
+    import joblib
+
+    model_path = folder / "model.joblib"
+    joblib.dump(estimator, model_path)
+    features = [
+        {
+            "nome": column,
+            "papel": "categorica",
+            "tipo_pandas_no_treino": str(train[column].dtype),
+            "aceita_nulo": bool(train[column].isna().any()),
+        }
+        for column in FEATURES_CATEGORICAS
+    ] + [
+        {
+            "nome": column,
+            "papel": "numerica",
+            "tipo_pandas_no_treino": str(train[column].dtype),
+            "aceita_nulo": bool(train[column].isna().any()),
+        }
+        for column in FEATURES_NUMERICAS
+    ]
+    schema = {
+        "schema_version": 1,
+        "alvo": spec["alvo"],
+        "features": features,
+        "classes": [{"codigo": code, "descricao": FAIXAS[code]} for code in CLASSES],
+    }
+    write_json(folder / "feature_schema.json", schema)
+    metadata = {
+        "schema_version": 1,
+        "artifact": {"path": "model.joblib", "sha256": sha256(model_path)},
+        "dataset_id": spec["dataset"]["id"],
+        "dataset_sha256": manifest["dataset_sha256_at_execution"],
+        "split_id": spec["divisao"]["id"],
+        "definition_sha256": manifest["definition_sha256"],
+        "modelo": spec["modelo"],
+        "python_version": manifest["python_version"],
+        "pandas_version": manifest["pandas_version"],
+        "sklearn_version": manifest["sklearn_version"],
+        "joblib_version": joblib.__version__,
+        "feature_schema": "feature_schema.json",
+    }
+    write_json(folder / "model_metadata.json", metadata)
+    return metadata["artifact"]
 
 
 def generate_results_and_catalog() -> None:
@@ -145,6 +202,7 @@ def generate_results_and_catalog() -> None:
         "schema_version", "run_id", "status", "nome", "dataset_id", "split_id", "split_nome", "split_papel",
         "modelo", "preprocessamento", "accuracy", "balanced_accuracy", "macro_f1",
         "treino_linhas", "avaliacao_linhas", "duracao_segundos", "concluida_em_utc", "code_commit",
+        "model_sha256",
     ]
     with (RUNS / "catalogo.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=columns, lineterminator="\n")
@@ -514,6 +572,7 @@ def execute(folder: Path) -> None:
                 "balanced_accuracy": float(balanced_accuracy_score(actual, predicted)),
                 "macro_f1": float(f1_score(actual, predicted, average="macro")),
             }
+            model_artifact = write_model_artifacts(folder, estimator, train, spec, manifest)
             write_json(folder / "metrics.json", metrics)
             write_json(folder / "classification_report.json", report)
             pd.DataFrame(matrix, index=CLASSES, columns=CLASSES).to_csv(
@@ -529,7 +588,7 @@ def execute(folder: Path) -> None:
         manifest.update(
             status="concluida", finished_at_utc=utc_now(), duration_seconds=duration,
             train_rows=int(len(train)), evaluation_rows=int(len(evaluation)),
-            warnings=len(warning_lines),
+            warnings=len(warning_lines), model_artifact=model_artifact,
         )
         write_json(folder / "manifest.json", manifest)
         write_result(folder)
@@ -539,7 +598,8 @@ def execute(folder: Path) -> None:
             f"- Acurácia: {metrics['accuracy']:.4f}\n"
             f"- Balanced accuracy: {metrics['balanced_accuracy']:.4f}\n"
             f"- Macro-F1: {metrics['macro_f1']:.4f}\n"
-            f"- Duração: {duration:.1f} segundos\n",
+            f"- Duração: {duration:.1f} segundos\n"
+            f"- Modelo serializado: `model.joblib` ({model_artifact['sha256']})\n",
             encoding="utf-8",
         )
         print(f"Run {folder.name} concluída: {metrics}")

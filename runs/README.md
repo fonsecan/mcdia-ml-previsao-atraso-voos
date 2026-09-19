@@ -15,11 +15,14 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 | `manifest.json` | Estado, horários, commit do código, hashes e contagens. |
 | `metrics.json` | Acurácia, balanced accuracy e macro-F1. |
 | `result.json` | Resumo plano e autocontido para comparação: dataset, divisão, modelo, métricas, tamanhos e duração. |
+| `model_metadata.json` | Hash do modelo serializado, ambiente, dataset, divisão e algoritmo usados. |
+| `feature_schema.json` | Variáveis esperadas para inferência e as classes de saída. |
 | `classification_report.json` | Precisão, recall e F1 por faixa nas novas runs. |
 | `confusion_matrix.csv` | Erros entre as seis faixas nas novas runs. |
 | `summary.md` | Resumo legível do resultado. |
 | `run.ipynb` | Notebook gerado a partir do template para reproduzir aquela configuração. |
 | `execution.log` | Avisos e erros de novas runs; arquivo local, ignorado pelo Git. |
+| `model.joblib` | Pipeline treinado completo; arquivo local, ignorado pelo Git. |
 
 O dataset grande, a atribuição de partições, modelos serializados e previsões individuais não são versionados. `run.yaml`, manifestos, métricas e resumos pequenos são versionados para permitir a leitura no GitHub. Uma pasta iniciada não é reutilizada: uma repetição recebe outro número.
 
@@ -30,6 +33,14 @@ python scripts\gerenciar_runs.py gerar-catalogo
 ```
 
 Antes de criar uma run, materialize e verifique o dataset e a divisão referenciados. O executor confere o SHA-256 do CSV, do manifesto do dataset, do manifesto do split e da atribuição de partições. Veja [`datasets/README.md`](../datasets/README.md) e [`splits/README.md`](../splits/README.md).
+
+Uma run concluída salva o pipeline completo em `model.joblib`. Para aplicá-lo a um CSV que contenha todas as variáveis de `feature_schema.json`, execute:
+
+```powershell
+python scripts\prever_run.py runs\000001 entrada.csv --saida previsoes.csv
+```
+
+O comando valida o hash do modelo e gera a faixa prevista, sua descrição e, quando o modelo suportar, uma coluna de probabilidade para cada faixa.
 
 ## Histórico legado
 
