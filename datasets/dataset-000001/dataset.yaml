@@ -1,14 +1,12 @@
-schema_version: 1
+schema_version: 2
 id: dataset-000001
 nome: VRA ANAC 2024-2025 para faixas de atraso
 fonte:
   nome: Voo Regular Ativo (VRA) / ANAC
   base_url: https://siros.anac.gov.br/siros/registros/diversos/vra
-coletas:
-  - ano: 2024
-    meses: 12
-  - ano: 2025
-    meses: 12
+periodo:
+  inicio_mes: "2024-01"
+  fim_mes: "2025-12"
 artefatos:
   bruto: raw
   auditoria: auditoria_amostra.json

@@ -22,6 +22,32 @@ DATASETS = ROOT / "datasets"
 SCRIPTS = ROOT / "scripts"
 
 
+def parse_month(value: str) -> tuple[int, int]:
+    try:
+        year_text, month_text = value.split("-", 1)
+        year, month = int(year_text), int(month_text)
+    except (ValueError, AttributeError):
+        raise ValueError(f"Mês inválido: {value!r}. Use o formato YYYY-MM.")
+    if year < 1 or not 1 <= month <= 12:
+        raise ValueError(f"Mês inválido: {value!r}. Use o formato YYYY-MM.")
+    return year, month
+
+
+def month_sequence(start: str, end: str) -> list[tuple[int, int]]:
+    first, last = parse_month(start), parse_month(end)
+    if first > last:
+        raise ValueError("periodo.inicio_mes não pode ser posterior a periodo.fim_mes.")
+    year, month = first
+    months = []
+    while (year, month) <= last:
+        months.append((year, month))
+        if month == 12:
+            year, month = year + 1, 1
+        else:
+            month += 1
+    return months
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -57,13 +83,12 @@ def dataset_folder(dataset_id: str) -> Path:
 
 def load_definition(folder: Path) -> dict:
     definition = yaml.safe_load((folder / "dataset.yaml").read_text(encoding="utf-8"))
-    if definition.get("schema_version") != 1 or definition.get("id") != folder.name:
+    if definition.get("schema_version") != 2 or definition.get("id") != folder.name:
         raise ValueError("dataset.yaml inválido ou incompatível com o nome da pasta.")
-    if not definition.get("coletas"):
-        raise ValueError("dataset.yaml deve informar ao menos uma coleta.")
-    for collection in definition["coletas"]:
-        if not isinstance(collection.get("ano"), int) or not 1 <= collection.get("meses", 0) <= 12:
-            raise ValueError("Cada coleta deve informar ano e meses entre 1 e 12.")
+    periodo = definition.get("periodo", {})
+    if not periodo.get("inicio_mes") or not periodo.get("fim_mes"):
+        raise ValueError("dataset.yaml deve informar periodo.inicio_mes e periodo.fim_mes.")
+    month_sequence(periodo["inicio_mes"], periodo["fim_mes"])
     return definition
 
 
@@ -86,21 +111,20 @@ def run(command: list[str], command_log: Path) -> None:
 def files_in_raw(raw: Path, definition: dict) -> list[dict]:
     base_url = definition["fonte"]["base_url"].rstrip("/")
     records = []
-    for collection in definition["coletas"]:
-        year = collection["ano"]
-        for month in range(1, collection["meses"] + 1):
-            name = f"VRA_{year}_{month:02d}.csv"
-            path = raw / name
-            if not path.exists():
-                raise FileNotFoundError(f"Coleta incompleta: {path}")
-            records.append({
-                "arquivo": name,
-                "ano": year,
-                "mes": month,
-                "url": f"{base_url}/{year}/{name}",
-                "bytes": path.stat().st_size,
-                "sha256": sha256(path),
-            })
+    periodo = definition["periodo"]
+    for year, month in month_sequence(periodo["inicio_mes"], periodo["fim_mes"]):
+        name = f"VRA_{year}_{month:02d}.csv"
+        path = raw / name
+        if not path.exists():
+            raise FileNotFoundError(f"Coleta incompleta: {path}")
+        records.append({
+            "arquivo": name,
+            "ano": year,
+            "mes": month,
+            "url": f"{base_url}/{year}/{name}",
+            "bytes": path.stat().st_size,
+            "sha256": sha256(path),
+        })
     return records
 
 
@@ -121,13 +145,12 @@ def materialize(dataset_id: str) -> None:
         encoding="utf-8",
     )
     raw.mkdir(parents=True, exist_ok=True)
-    for collection in definition["coletas"]:
-        run([
-            sys.executable, "scripts/baixar_amostra.py", "--ano", str(collection["ano"]),
-            "--meses", str(collection["meses"]), "--output-dir",
-            str(raw.relative_to(ROOT)), "--metadata-output",
-            str((folder / f"download_{collection['ano']}.json").relative_to(ROOT)),
-        ], command_log)
+    periodo = definition["periodo"]
+    run([
+        sys.executable, "scripts/baixar_amostra.py", "--inicio-mes", periodo["inicio_mes"],
+        "--fim-mes", periodo["fim_mes"], "--output-dir", str(raw.relative_to(ROOT)),
+        "--metadata-output", str((folder / "download.json").relative_to(ROOT)),
+    ], command_log)
     audit = folder / artifacts["auditoria"]
     derived = folder / artifacts["derivado"]
     modeling = folder / artifacts["modelagem"]
@@ -162,12 +185,13 @@ def materialize(dataset_id: str) -> None:
     checksums.extend(f"{item['sha256']}  {Path(item['path']).name}" for item in generated.values())
     (folder / "checksums.sha256").write_text("\n".join(checksums) + "\n", encoding="utf-8")
     write_json(manifest_path, {
-        "schema_version": 1,
+        "schema_version": 2,
         "dataset_id": dataset_id,
         "status": "materializado",
         "materializado_em_utc": utc_now(),
         "definition": "dataset.yaml",
         "definition_sha256": sha256(folder / "dataset.yaml"),
+        "periodo": definition["periodo"],
         "receita": "receita.sh",
         "receita_sha256": sha256(folder / "receita.sh"),
         "comandos": {"path": "commands.log", "sha256": sha256(command_log)},
