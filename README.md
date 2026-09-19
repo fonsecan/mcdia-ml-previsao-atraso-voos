@@ -191,6 +191,95 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 
 
 
+## Abrir o notebook no Linux com Python 3.14, sem Conda
+
+Este fluxo usa o ambiente virtual nativo do Python (`venv`). Abra um terminal Linux. Os blocos abaixo são independentes; execute um bloco por vez.
+
+Confirme que o Python 3.14 está instalado:
+
+```bash
+python3.14 --version
+```
+
+Se o comando não existir, instale o pacote Python 3.14 e o módulo `venv` usando o gerenciador de pacotes da sua distribuição. Os nomes dos pacotes podem variar entre distribuições.
+
+Clone o projeto:
+
+```bash
+git clone https://github.com/fonsecan/mcdia-ml-previsao-atraso-voos.git
+```
+
+Entre na pasta do projeto:
+
+```bash
+cd mcdia-ml-previsao-atraso-voos
+```
+
+Crie o ambiente virtual com Python 3.14. Esse comando só precisa ser executado na primeira vez:
+
+```bash
+python3.14 -m venv .venv
+```
+
+Ative o ambiente:
+
+```bash
+source .venv/bin/activate
+```
+
+Com o ambiente ativo, atualize o instalador e instale as dependências:
+
+```bash
+python -m pip install --upgrade pip
+```
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Baixe os 24 meses, audite os arquivos e gere o CSV derivado:
+
+```bash
+python scripts/baixar_amostra.py --ano 2024 --meses 12
+```
+
+```bash
+python scripts/baixar_amostra.py --ano 2025 --meses 12
+```
+
+```bash
+python scripts/auditar_amostra_v2.py
+```
+
+```bash
+python scripts/preparar_dados_v2.py
+```
+
+Prepare a base de modelagem:
+
+```bash
+python scripts/preparar_modelagem.py
+```
+
+Abra o JupyterLab a partir da raiz do projeto:
+
+```bash
+jupyter lab
+```
+
+No navegador, abra `notebooks/00_entendimento_do_dataset.ipynb` ou `notebooks/01_modelagem_faixas_atraso.ipynb`. Se o kernel não aparecer, execute com o ambiente `.venv` ativo:
+
+```bash
+python -m ipykernel install --user --name mcdia-ml-voos-py314 --display-name "Python (mcdia-ml-voos-py314)"
+```
+
+Para sair do ambiente virtual depois do uso:
+
+```bash
+deactivate
+```
+
+Se o terminal for fechado, reative o ambiente entrando novamente na pasta do projeto e executando `source .venv/bin/activate`. O diretório `.venv` é local e não deve ser versionado.
 ## Preparar a base de modelagem
 
 Depois de gerar o dataset derivado, prepare a base usada pelos modelos. Execute no Anaconda Prompt:
