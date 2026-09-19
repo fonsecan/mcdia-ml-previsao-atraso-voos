@@ -55,3 +55,9 @@ Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md) e [`d
 Com janeiro e fevereiro de 2025, `scripts/preparar_dados_v2.py` gerou `data/voos_vra_derivados.csv` com 168.546 linhas, 162.553 voos realizados e 5.993 cancelados. O indicador `atraso_chegada_15m` é verdadeiro em 28.147 linhas.
 
 Atrasos em minutos possuem outliers importantes: 51 registros excedem 24 horas. Por isso, o primeiro modelo deve usar o alvo binário de atraso de chegada, deixando a regressão em minutos para uma etapa posterior com regras de outlier documentadas. Os detalhes estão em [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
+
+### Achado: outliers extremos de atraso
+
+Na amostra derivada de janeiro e fevereiro de 2025, 51 voos têm `atraso_chegada_min` superior a 24 horas. Há pelo menos um registro acima de 30 dias: a chegada prevista em 03/01/2025 aparece como realizada em 03/02/2025. A situação operacional também está classificada como `Atraso > 240`.
+
+Esse achado pode representar uma alteração operacional real, uma remarcação registrada na mesma etapa ou um problema de qualidade/integração dos dados. Não devemos removê-lo automaticamente. O alvo inicial será `atraso_chegada_15m`, que é robusto a esse valor extremo; uma futura regressão em minutos deverá comparar métricas com e sem esses casos, depois de definir uma regra de tratamento antes do teste.
