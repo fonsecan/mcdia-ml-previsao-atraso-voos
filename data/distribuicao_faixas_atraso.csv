@@ -1,0 +1,6 @@
+codigo_faixa,faixa,quantidade,percentual
+0,Pontual ou atraso de 0 a 14 min,1534456,82.31198989376111
+1,Atraso de 15 a 30 min,161959,8.687878682219402
+2,Atraso de 31 a 45 min,63343,3.397874149431792
+3,Atraso de 46 a 60 min,32026,1.7179533256982236
+4,Atraso superior a 60 min,72411,3.884303948889467

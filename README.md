@@ -65,7 +65,8 @@ python -m pip install -r requirements.txt
 Baixe dois meses, audite os arquivos e gere o CSV derivado. Este bloco pode ser copiado e executado de uma vez:
 
 ```powershell
-python scripts\baixar_amostra.py --ano 2025 --meses 2
+python scripts\baixar_amostra.py --ano 2024 --meses 12
+python scripts\baixar_amostra.py --ano 2025 --meses 12
 python scripts\auditar_amostra_v2.py
 python scripts\preparar_dados_v2.py
 ```
@@ -88,15 +89,15 @@ Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md).
 
 ## Dataset derivado inicial
 
-Com janeiro e fevereiro de 2025, `scripts/preparar_dados_v2.py` gerou `data/voos_vra_derivados.csv` com 168.546 linhas, 162.553 voos realizados e 5.993 cancelados. O indicador `atraso_chegada_15m` é verdadeiro em 28.147 linhas.
+Com janeiro de 2024 a dezembro de 2025, `scripts/preparar_dados_v2.py` gerou localmente `data/voos_vra_derivados.csv` com 1.992.832 linhas, 1.923.336 voos realizados e 69.496 cancelados. O indicador `atraso_chegada_15m` é verdadeiro em 329.739 linhas.
 
-Atrasos em minutos possuem outliers importantes: 51 registros excedem 24 horas. Por isso, o primeiro modelo deve usar o alvo binário de atraso de chegada, deixando a regressão em minutos para uma etapa posterior com regras de outlier documentadas. Os detalhes estão em [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
+Atrasos em minutos possuem outliers importantes. O projeto seguirá inicialmente com classificação ordinal em cinco faixas de atraso, mantendo a classificação binária como comparação. Os detalhes estão em [`README-classificacao-faixas-atraso.md`](README-classificacao-faixas-atraso.md) e [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
 
 ### Achado: outliers extremos de atraso
 
-Na amostra derivada de janeiro e fevereiro de 2025, 51 voos têm `atraso_chegada_min` superior a 24 horas. Há pelo menos um registro acima de 30 dias: a chegada prevista em 03/01/2025 aparece como realizada em 03/02/2025. A situação operacional também está classificada como `Atraso > 240`.
+Na base derivada de 24 meses, a distribuição das faixas foi calculada somente para voos realizados com atraso de chegada calculável. O relatório local está em `data/distribuicao_faixas_atraso.csv` e pode ser recriado com `python scripts\analisar_faixas_atraso.py`.
 
-Esse achado pode representar uma alteração operacional real, uma remarcação registrada na mesma etapa ou um problema de qualidade/integração dos dados. Não devemos removê-lo automaticamente. O alvo inicial será `atraso_chegada_15m`, que é robusto a esse valor extremo; uma futura regressão em minutos deverá comparar métricas com e sem esses casos, depois de definir uma regra de tratamento antes do teste.
+Entre os 1.864.195 voos realizados com atraso calculável, 82,31% ficaram na faixa pontual ou até 14 minutos; 8,69% entre 15 e 30 minutos; 3,40% entre 31 e 45 minutos; 1,72% entre 46 e 60 minutos; e 3,88% acima de 60 minutos. Há 59.141 voos realizados sem atraso de chegada calculável.
 
 ## Abrir o notebook no Windows com Anaconda e JupyterLab
 
@@ -123,10 +124,11 @@ conda activate mcdia-ml-voos
 python -m pip install -r requirements.txt
 ```
 
-5. Baixe a amostra e gere o CSV derivado:
+5. Baixe os 24 meses e gere o CSV derivado:
 
 ```powershell
-python scripts\baixar_amostra.py --ano 2025 --meses 2
+python scripts\baixar_amostra.py --ano 2024 --meses 12
+python scripts\baixar_amostra.py --ano 2025 --meses 12
 python scripts\auditar_amostra_v2.py
 python scripts\preparar_dados_v2.py
 ```
