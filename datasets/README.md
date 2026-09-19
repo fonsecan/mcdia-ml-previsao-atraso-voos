@@ -4,6 +4,19 @@ Cada diretório `dataset-NNNNNN` define uma versão imutável dos dados usados p
 
 O manifesto registra URLs, SHA-256 e tamanho dos arquivos VRA, os hashes dos artefatos derivados, o commit do código e as versões de Python e pandas. Portanto, repetir uma receita só é considerado a reprodução do mesmo dataset quando todos os hashes de entrada coincidem. Caso a ANAC tenha republicado algum CSV, crie um novo diretório numerado: nunca substitua o conteúdo de um dataset já registrado.
 
+## Materializar um dataset
+
+Materializar significa executar a receita versionada e produzir os arquivos reais no disco. Antes disso, o diretório contém somente as instruções de como construir o dataset; depois, ele contém os CSVs brutos, os artefatos derivados e evidências de proveniência.
+
+Ao materializar, o gerenciador:
+
+1. baixa os CSVs mensais definidos em `dataset.yaml` para `raw/`;
+2. registra URL, data, tamanho e SHA-256 de cada coleta;
+3. audita os arquivos brutos;
+4. gera o dataset derivado;
+5. gera a base de modelagem, incluindo a coluna-alvo `faixa_atraso`;
+6. cria `manifest.json` e `checksums.sha256` com os hashes dos dados e dos scripts usados.
+
 Para materializar a primeira versão:
 
 ```bash
