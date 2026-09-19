@@ -49,3 +49,9 @@ Os scripts registram a URL, a data de coleta e as estatísticas básicas. Eles n
 - A auditoria encontrou registros sem horários previstos e realizados; o recorte válido do alvo precisa ser documentado antes do treinamento.
 
 Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md) e [`docs/02-correcao-codificacao.md`](docs/02-correcao-codificacao.md).
+
+## Dataset derivado inicial
+
+Com janeiro e fevereiro de 2025, `scripts/preparar_dados_v2.py` gerou `data/voos_vra_derivados.csv` com 168.546 linhas, 162.553 voos realizados e 5.993 cancelados. O indicador `atraso_chegada_15m` é verdadeiro em 28.147 linhas.
+
+Atrasos em minutos possuem outliers importantes: 51 registros excedem 24 horas. Por isso, o primeiro modelo deve usar o alvo binário de atraso de chegada, deixando a regressão em minutos para uma etapa posterior com regras de outlier documentadas. Os detalhes estão em [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
