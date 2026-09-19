@@ -184,6 +184,83 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 - **CSV não encontrado:** execute `python scripts\\preparar_dados_v2.py` na raiz do projeto antes de abrir o notebook.
 - **Kernel não aparece:** execute o comando `ipykernel install` acima e reinicie o JupyterLab.
 
+## Abrir o notebook no Linux Fedora com Python e JupyterLab
+
+No Fedora GNOME, abra o **Terminal** (`Ctrl + Alt + T`) e instale os pacotes necessários:
+
+```bash
+sudo dnf install -y git python3.14 python3.14-pip
+```
+
+Confirme a versão do Python:
+
+```bash
+python3.14 --version
+```
+
+Se o projeto ainda não estiver no computador, clone-o uma vez:
+
+```bash
+mkdir -p ~/Git
+cd ~/Git
+git clone https://github.com/fonsecan/mcdia-ml-previsao-atraso-voos.git
+```
+
+Entre na pasta do projeto e crie o ambiente virtual:
+
+```bash
+cd ~/Git/mcdia-ml-previsao-atraso-voos
+python3.14 -m venv .venv
+source .venv/bin/activate
+```
+
+Instale as dependências:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install ipykernel
+```
+
+Registre o kernel do ambiente:
+
+```bash
+python -m ipykernel install --user \
+  --name mcdia-ml-voos \
+  --display-name "Python (mcdia-ml-voos)"
+```
+
+Baixe os dados e gere o CSV derivado:
+
+```bash
+python scripts/baixar_amostra.py --ano 2024 --meses 12
+python scripts/baixar_amostra.py --ano 2025 --meses 12
+python scripts/auditar_amostra_v2.py
+python scripts/preparar_dados_v2.py
+```
+
+Opcionalmente, prepare também a base de modelagem:
+
+```bash
+python scripts/preparar_modelagem.py
+```
+
+Inicie o JupyterLab a partir da raiz do projeto:
+
+```bash
+jupyter lab
+```
+
+No navegador, abra `notebooks/00_entendimento_do_dataset.ipynb` ou `notebooks/01_modelagem_faixas_atraso.ipynb` e selecione o kernel **Python (mcdia-ml-voos)**.
+
+Nas próximas sessões, basta executar:
+
+```bash
+cd ~/Git/mcdia-ml-previsao-atraso-voos
+source .venv/bin/activate
+jupyter lab
+```
+
 
 
 
