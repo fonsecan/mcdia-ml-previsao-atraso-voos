@@ -41,7 +41,9 @@ def main() -> None:
         "codigo_tipo_linha", "modelo_equipamento", "numero_assentos",
         "partida_prevista", "realizado", "atraso_chegada_min", "arquivo_origem", "linha_origem",
     ]
+    input_columns = list(pd.read_csv(input_path, nrows=0).columns)
     df = pd.read_csv(input_path, usecols=columns, low_memory=False)
+    input_rows = len(df)
     df["partida_prevista"] = pd.to_datetime(df["partida_prevista"], errors="coerce")
     df["realizado"] = df["realizado"].fillna(False).astype(bool)
     janela = df["partida_prevista"].between("2024-01-01", "2025-12-31 23:59:59")
@@ -83,9 +85,35 @@ def main() -> None:
     )
     monthly.to_csv(monthly_output, index=False, encoding="utf-8")
     print(f"Arquivo de modelagem: {output}")
+    print(f"Linhas de entrada: {input_rows}")
     print(f"Linhas elegíveis: {len(modelagem)}")
+    print(f"Linhas não elegíveis: {input_rows - len(modelagem)}")
+    print(
+        "Critérios de elegibilidade: voo realizado, partida prevista válida, "
+        "atraso de chegada calculável e período entre 2024-01-01 e 2025-12-31."
+    )
+    excluded_columns = [column for column in input_columns if column not in features]
+    created_columns = [column for column in features if column not in input_columns]
+    print(f"Colunas de entrada: {len(input_columns)}")
+    print(f"Colunas na base de modelagem: {len(features)}")
+    print(f"Redução líquida de colunas: {len(input_columns) - len(features)}")
+    print(f"Colunas brutas não levadas para a modelagem: {', '.join(excluded_columns)}")
+    print(f"Colunas criadas para a modelagem: {', '.join(created_columns)}")
     print(f"Distribuição mensal: {monthly_output}")
-    print(modelagem["faixa_atraso"].value_counts().sort_index().to_string())
+    distribuicao = (
+        modelagem["faixa_atraso"]
+        .value_counts()
+        .reindex(FAIXAS.keys(), fill_value=0)
+        .rename("quantidade")
+        .to_frame()
+    )
+    distribuicao.index.name = "codigo"
+    distribuicao["classificacao"] = distribuicao.index.map(FAIXAS)
+    distribuicao["percentual"] = (
+        100 * distribuicao["quantidade"] / len(modelagem)
+    ).round(2)
+    print("Distribuição das faixas de atraso:")
+    print(distribuicao[["classificacao", "quantidade", "percentual"]].to_string())
 
 if __name__ == "__main__":
     main()

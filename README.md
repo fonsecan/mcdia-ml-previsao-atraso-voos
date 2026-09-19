@@ -12,7 +12,25 @@ Em qual faixa de atraso de chegada um voo programado será classificado?
 
 O primeiro recorte é retrospectivo: a base histórica da ANAC combina informações planejadas e realizadas. Antes de chamar o resultado de previsão operacional, devemos confirmar quais horários previstos estavam disponíveis antes da execução do voo.
 
-O alvo atual usa seis faixas ordinais de atraso de chegada; consulte a [definição completa das categorias](README-classificacao-faixas-atraso.md).
+O alvo atual usa seis faixas ordinais de atraso de chegada:
+
+| Código | Classificação | Atraso de chegada |
+|---:|---|---|
+| 0 | Pontual ou antecipado | menor ou igual a 0 minutos |
+| 1 | Atraso inferior a 15 minutos | de 1 a 14 minutos |
+| 2 | Atraso de 15 a 30 minutos | de 15 a 30 minutos |
+| 3 | Atraso superior a 30 até 45 minutos | de 31 a 45 minutos |
+| 4 | Atraso superior a 45 até 60 minutos | de 46 a 60 minutos |
+| 5 | Atraso superior a 60 minutos | acima de 60 minutos |
+
+Há duas formas principais de formular esse problema:
+
+- **Regressão:** o modelo prevê um número contínuo, por exemplo, `37` minutos de atraso. Métricas como MAE e RMSE medem a diferença entre os minutos previstos e os observados.
+- **Classificação:** o modelo escolhe uma categoria, por exemplo, “atraso de 15 a 30 minutos”. Métricas como macro-F1, balanced accuracy, recall e matriz de confusão avaliam a qualidade das classes previstas.
+
+O foco deste trabalho é **classificação ordinal**. As classes são categorias, mas possuem uma ordem natural: errar uma faixa por uma categoria é menos distante do que errar por várias. Por isso, além das métricas de classificação, podemos usar um RMSE ordinal complementar, calculado sobre os códigos de 0 a 5. Ele mede a distância entre faixas, não o erro em minutos.
+
+Consulte também a [definição completa das categorias](README-classificacao-faixas-atraso.md).
 
 ## Fonte
 
@@ -28,6 +46,7 @@ O VRA contém companhia, voo, origem, destino, horários previstos e realizados 
 - `datasets/`: receitas e manifestos de versões imutáveis dos dados.
 - `splits/`: receitas e manifestos das divisões de treino, validação e teste.
 - `docs/`: hipótese, decisões e limitações.
+- [`docs/08-hiperparametros.md`](docs/08-hiperparametros.md): busca de hiperparâmetros com validação temporal.
 - `notebooks/`: exploração, qualidade e primeiro modelo.
 - `scripts/`: download e auditoria reproduzíveis.
 - `artifacts/`: gráficos, métricas e modelos locais; não versionados.
@@ -130,9 +149,9 @@ Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md).
 
 ## Dataset derivado inicial
 
-Com janeiro de 2024 a dezembro de 2025, `scripts/preparar_dados_v2.py` gerou localmente `data/voos_vra_derivados.csv` com 1.992.832 linhas, 1.923.336 voos realizados e 69.496 cancelados. O indicador `atraso_chegada_15m` é verdadeiro em 329.739 linhas.
+Com janeiro de 2024 a dezembro de 2025, `scripts/preparar_dados_v2.py` gera localmente `data/voos_vra_derivados.csv` com os atrasos de partida e chegada em minutos. A coluna `faixa_atraso` é criada posteriormente por `scripts/preparar_modelagem.py`, somente para voos realizados com atraso de chegada calculável.
 
-Atrasos em minutos possuem outliers importantes. O projeto seguirá inicialmente com classificação ordinal em seis faixas de atraso, mantendo a classificação binária como comparação. Os detalhes estão em [`README-classificacao-faixas-atraso.md`](README-classificacao-faixas-atraso.md) e [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
+Atrasos em minutos possuem outliers importantes. O projeto usa classificação ordinal em seis faixas de atraso. Os detalhes estão em [`README-classificacao-faixas-atraso.md`](README-classificacao-faixas-atraso.md) e [`docs/04-qualidade-dataset-derivado.md`](docs/04-qualidade-dataset-derivado.md).
 
 ### Achado: outliers extremos de atraso
 
@@ -181,7 +200,7 @@ python scripts\gerenciar_divisoes.py materializar split-000004
 jupyter lab
 ```
 
-7. No navegador, abra `notebooks\00_entendimento_do_dataset.ipynb` ou `notebooks\01_modelagem_faixas_atraso.ipynb`.
+7. No navegador, abra `notebooks\00_preparar_dados.ipynb` e execute suas células. Depois, abra `notebooks\01_entendimento_do_dataset.ipynb` ou `notebooks\02_modelagem_faixas_atraso.ipynb`.
 8. No canto superior direito, selecione o kernel do ambiente `mcdia-ml-voos`. Se ele não aparecer, execute no Anaconda Prompt:
 
 ```powershell
@@ -197,7 +216,7 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 3. Instale as dependências listadas em `requirements.txt` no terminal do ambiente ou pelo botão de instalação.
 4. Na aba **Home**, selecione o ambiente `mcdia-ml-voos` e clique em **Launch** no JupyterLab.
 5. No JupyterLab, navegue até `notebooks`.
-6. Abra `00_entendimento_do_dataset.ipynb` e confirme o kernel `Python (mcdia-ml-voos)`.
+6. Abra `00_preparar_dados.ipynb`, execute suas células e confirme o kernel `Python (mcdia-ml-voos)`. Depois abra `01_entendimento_do_dataset.ipynb`.
 
 É importante abrir o JupyterLab na raiz do projeto ou gerar a base antes de abrir o notebook. O notebook procura o diretório `data` subindo a partir da pasta de trabalho.
 
@@ -270,7 +289,7 @@ Inicie o JupyterLab a partir da raiz do projeto:
 jupyter lab
 ```
 
-No navegador, abra `notebooks/00_entendimento_do_dataset.ipynb` ou `notebooks/01_modelagem_faixas_atraso.ipynb` e selecione o kernel **Python (mcdia-ml-voos)**.
+No navegador, abra `notebooks/00_preparar_dados.ipynb`, execute-o e depois abra `notebooks/01_entendimento_do_dataset.ipynb` ou `notebooks/02_modelagem_faixas_atraso.ipynb`. Selecione o kernel **Python (mcdia-ml-voos)**.
 
 Nas próximas sessões, basta executar:
 
@@ -349,7 +368,7 @@ Abra o JupyterLab a partir da raiz do projeto:
 jupyter lab
 ```
 
-No navegador, abra `notebooks/00_entendimento_do_dataset.ipynb` ou `notebooks/01_modelagem_faixas_atraso.ipynb`. Se o kernel não aparecer, execute com o ambiente `.venv` ativo:
+No navegador, abra `notebooks/00_preparar_dados.ipynb`, execute-o e depois abra `notebooks/01_entendimento_do_dataset.ipynb` ou `notebooks/02_modelagem_faixas_atraso.ipynb`. Se o kernel não aparecer, execute com o ambiente `.venv` ativo:
 
 ```bash
 python -m ipykernel install --user --name mcdia-ml-voos-py314 --display-name "Python (mcdia-ml-voos-py314)"
@@ -370,7 +389,7 @@ O dataset versionado já gera a base usada pelos modelos. Para preparar uma base
 python scripts\preparar_modelagem.py
 ```
 
-O script cria localmente os arquivos de modelagem e a distribuição mensal das seis classes. Abra então o notebook notebooks/01_modelagem_faixas_atraso.ipynb. Ele usa treino de janeiro de 2024 a junho de 2025, validação de julho a setembro de 2025 e teste de outubro a dezembro de 2025.
+O notebook `notebooks/00_preparar_dados.ipynb` cria localmente os arquivos de modelagem e a distribuição mensal das seis classes. Abra então `notebooks/02_modelagem_faixas_atraso.ipynb`. Ele usa treino de janeiro de 2024 a junho de 2025, validação de julho a setembro de 2025 e teste de outubro a dezembro de 2025.
 
 
 

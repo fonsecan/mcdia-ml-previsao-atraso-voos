@@ -49,9 +49,6 @@ def transform(frame: pd.DataFrame, source: str) -> pd.DataFrame:
     result["atraso_chegada_min"] = (
         (result["chegada_real"] - result["chegada_prevista"]).dt.total_seconds() / 60
     ).round(1)
-    result["atraso_partida_15m"] = result["atraso_partida_min"].ge(15)
-    result["atraso_chegada_15m"] = result["atraso_chegada_min"].ge(15)
-    result.loc[~result["realizado"], ["atraso_partida_15m", "atraso_chegada_15m"]] = pd.NA
     result["arquivo_origem"] = source
     result["linha_origem"] = range(1, len(result) + 1)
     return result
@@ -74,7 +71,6 @@ def main() -> None:
     print(f"Linhas: {len(result)}")
     print(f"Realizados: {int(result['realizado'].sum())}")
     print(f"Cancelados: {int(result['cancelado'].sum())}")
-    print(f"Atrasos de chegada >= 15 min: {int(result['atraso_chegada_15m'].fillna(False).sum())}")
 
 
 if __name__ == "__main__":

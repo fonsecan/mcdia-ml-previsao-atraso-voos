@@ -7,7 +7,7 @@ Avaliar se informações conhecidas antes de uma etapa de voo permitem estimar a
 ## Alvos
 
 - `cancelado`: 1 quando a situação do voo for cancelado.
-- `atraso_chegada_15m`: 1 quando o voo realizado tiver chegada pelo menos 15 minutos depois da chegada prevista.
+- `faixa_atraso`: classificação ordinal do atraso de chegada em seis faixas, calculada somente para voos realizados com atraso de chegada observável.
 
 Os alvos são mutuamente informativos, mas não devem ser confundidos: voo cancelado não tem atraso de chegada observável.
 
@@ -23,4 +23,4 @@ Separação temporal. Começar com 2022–2023 para treino, 2024 para validaçã
 
 ## Limitações
 
-O VRA é uma base mensal consolidada e pode ser revisado. É necessário verificar a semântica e a disponibilidade histórica dos horários previstos antes de interpretar o resultado como previsão feita antes do voo. Voos sem chegada real não entram no alvo de atraso de chegada; cancelamentos são avaliados separadamente.
+O VRA é uma base mensal consolidada e pode ser revisado. É necessário verificar a semântica e a disponibilidade histórica dos horários previstos antes de interpretar o resultado como previsão feita antes do voo. Voos sem chegada real não entram no alvo de atraso de chegada; cancelamentos são avaliados separadamente. O foco atual é a classificação ordinal em seis faixas, não um indicador binário de atraso superior a 15 minutos.

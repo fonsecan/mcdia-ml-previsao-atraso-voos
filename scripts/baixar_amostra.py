@@ -74,6 +74,8 @@ def main() -> None:
         name = f"VRA_{year}_{month:02d}.csv"
         url = f"{BASE}/{year}/{name}"
         target = raw / name
+        periodo_atual = f"{year:04d}-{month:02d}"
+        print(f"Buscando mês {periodo_atual} na URL {url}...", flush=True)
         if target.exists() and not args.sobrescrever:
             raise FileExistsError(
                 f"Arquivo já existe: {target}. Use --sobrescrever somente para uma nova coleta."
@@ -82,6 +84,7 @@ def main() -> None:
         with urlopen(url) as response, temporary.open("wb") as output:
             output.write(response.read())
         temporary.replace(target)
+        print(f"{periodo_atual} salvo com sucesso no arquivo {target}", flush=True)
         digest = hashlib.sha256(target.read_bytes()).hexdigest()
         files.append({
             "arquivo": name, "ano": year, "mes": month, "url": url,
