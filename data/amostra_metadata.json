@@ -6,6 +6,11 @@
       "arquivo": "VRA_2025_01.csv",
       "url": "https://siros.anac.gov.br/siros/registros/diversos/vra/2025/VRA_2025_01.csv",
       "bytes": 27714618
+    },
+    {
+      "arquivo": "VRA_2025_02.csv",
+      "url": "https://siros.anac.gov.br/siros/registros/diversos/vra/2025/VRA_2025_02.csv",
+      "bytes": 24489583
     }
   ]
 }

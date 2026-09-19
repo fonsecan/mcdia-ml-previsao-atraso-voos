@@ -1,6 +1,7 @@
 [
   {
     "arquivo": "VRA_2025_01.csv",
+    "encoding": "utf-8-sig",
     "linhas": 89616,
     "colunas": [
       "Sigla ICAO Empresa Aérea",
@@ -48,6 +49,68 @@
       "Situação Partida": 5493,
       "Situação Chegada": 5493,
       "Codeshare": 50087
+    },
+    "coluna_situacao": "Situação Voo",
+    "situacao": {
+      "REALIZADO": 86376,
+      "CANCELADO": 3240
+    }
+  },
+  {
+    "arquivo": "VRA_2025_02.csv",
+    "encoding": "utf-8-sig",
+    "linhas": 78930,
+    "colunas": [
+      "Sigla ICAO Empresa Aérea",
+      "Empresa Aérea",
+      "Número Voo",
+      "Código DI",
+      "Código Tipo Linha",
+      "Modelo Equipamento",
+      "Número de Assentos",
+      "Sigla ICAO Aeroporto Origem",
+      "Descrição Aeroporto Origem",
+      "Partida Prevista",
+      "Partida Real",
+      "Sigla ICAO Aeroporto Destino",
+      "Descrição Aeroporto Destino",
+      "Chegada Prevista",
+      "Chegada Real",
+      "Situação Voo",
+      "Justificativa",
+      "Referência",
+      "Situação Partida",
+      "Situação Chegada",
+      "Codeshare"
+    ],
+    "duplicatas": 0,
+    "ausentes_por_coluna": {
+      "Sigla ICAO Empresa Aérea": 0,
+      "Empresa Aérea": 0,
+      "Número Voo": 0,
+      "Código DI": 0,
+      "Código Tipo Linha": 0,
+      "Modelo Equipamento": 0,
+      "Número de Assentos": 0,
+      "Sigla ICAO Aeroporto Origem": 0,
+      "Descrição Aeroporto Origem": 0,
+      "Partida Prevista": 2140,
+      "Partida Real": 2753,
+      "Sigla ICAO Aeroporto Destino": 0,
+      "Descrição Aeroporto Destino": 0,
+      "Chegada Prevista": 2140,
+      "Chegada Real": 2753,
+      "Situação Voo": 0,
+      "Justificativa": 78930,
+      "Referência": 0,
+      "Situação Partida": 4893,
+      "Situação Chegada": 4893,
+      "Codeshare": 43219
+    },
+    "coluna_situacao": "Situação Voo",
+    "situacao": {
+      "REALIZADO": 76177,
+      "CANCELADO": 2753
     }
   }
 ]
