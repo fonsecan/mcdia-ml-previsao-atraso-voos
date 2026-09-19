@@ -30,20 +30,53 @@ O VRA contém companhia, voo, origem, destino, horários previstos e realizados 
 
 ## Primeiro passo executável
 
-No Anaconda Prompt:
+**Abra o Anaconda Prompt pelo menu Iniciar. Não use o PowerShell comum.** Execute cada bloco somente depois que o bloco anterior terminar.
+
+Se o projeto ainda não estiver no computador, clone-o uma vez:
+
+```powershell
+git clone https://github.com/fonsecan/mcdia-ml-previsao-atraso-voos.git
+```
+
+Entre na pasta do projeto:
 
 ```powershell
 cd mcdia-ml-previsao-atraso-voos
+```
+
+Na primeira execução, crie o ambiente. Este comando é interativo: quando o Conda perguntar se deseja prosseguir, digite `y` e pressione Enter. Aguarde a conclusão antes de continuar:
+
+```powershell
 conda create --name mcdia-ml python=3.11
+```
+
+Ative o ambiente:
+
+```powershell
 conda activate mcdia-ml
+```
+
+Com o ambiente ativo, instale as dependências. Este bloco pode ser copiado e executado de uma vez:
+
+```powershell
 python -m pip install -r requirements.txt
-python scripts/baixar_amostra.py --ano 2025 --meses 1
-python scripts/auditar_amostra.py
+```
+
+Baixe dois meses, audite os arquivos e gere o CSV derivado. Este bloco pode ser copiado e executado de uma vez:
+
+```powershell
+python scripts\baixar_amostra.py --ano 2025 --meses 2
+python scripts\auditar_amostra_v2.py
+python scripts\preparar_dados_v2.py
+```
+
+Abra o JupyterLab em um comando separado:
+
+```powershell
 jupyter lab
 ```
 
-Os scripts registram a URL, a data de coleta e as estatísticas básicas. Eles não alteram os CSVs originais.
-
+Os scripts registram a URL, a data da coleta e as estatísticas básicas. Eles não alteram os CSVs originais.
 ## Desafios já identificados
 
 - Os CSVs da ANAC são UTF-8 válido. A primeira aparência de `latin1` foi causada pela exibição de acentos pelo terminal Windows, não pela codificação do arquivo.
@@ -132,6 +165,7 @@ python -m ipykernel install --user --name mcdia-ml --display-name "Python (mcdia
 - **CSV não encontrado:** execute `python scripts\\preparar_dados_v2.py` na raiz do projeto antes de abrir o notebook.
 - **Kernel não aparece:** execute o comando `ipykernel install` acima e reinicie o JupyterLab.
 - **Acentos aparecem quebrados no terminal:** o CSV é UTF-8; o problema é apenas a codificação de exibição do terminal.
+
 
 
 
