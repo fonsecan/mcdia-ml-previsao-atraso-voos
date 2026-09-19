@@ -55,3 +55,18 @@ O Random Forest foi avaliado com codificação ordinal das variáveis categóric
 O Random Forest apresentou o melhor balanced accuracy e macro-F1 entre os modelos testados até agora. A acurácia continua abaixo do baseline majoritário porque o modelo tenta identificar as classes menos frequentes.
 
 A codificação ordinal impõe uma ordem numérica artificial às categorias de aeroportos e companhias. Portanto, este resultado é uma referência inicial. Um próximo experimento deve avaliar uma codificação mais apropriada para categorias ou um modelo especializado em dados categóricos.
+
+## HistGradientBoosting com Target Encoding
+
+Neste experimento, cada categoria foi codificada usando estatísticas calculadas somente no conjunto de treino. O modelo recebeu essas variáveis numéricas e utilizou HistGradientBoostingClassifier com pesos balanceados.
+
+| Modelo | Acurácia | Balanced accuracy | Macro-F1 |
+|---|---:|---:|---:|
+| Classe majoritária | 0,5825 | 0,1667 | 0,1227 |
+| Regressão logística balanceada | 0,2071 | 0,2150 | 0,1503 |
+| Random Forest balanceado | 0,3087 | 0,2367 | 0,1969 |
+| HistGradientBoosting + Target Encoding | 0,2499 | 0,2391 | 0,1783 |
+
+O HistGradientBoosting obteve a maior balanced accuracy até agora, mas o Random Forest manteve o maior macro-F1. Isso mostra que a escolha do modelo depende da métrica prioritária: equilíbrio do recall entre classes ou qualidade média das previsões por classe.
+
+O Target Encoding deve ser ajustado somente no treino. Calcular essas estatísticas usando validação ou teste causaria vazamento de informação.
