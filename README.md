@@ -79,7 +79,6 @@ jupyter lab
 Os scripts registram a URL, a data da coleta e as estatísticas básicas. Eles não alteram os CSVs originais.
 ## Desafios já identificados
 
-- Os CSVs da ANAC são UTF-8 válido. A primeira aparência de `latin1` foi causada pela exibição de acentos pelo terminal Windows, não pela codificação do arquivo.
 - O VRA é uma base mensal consolidada e pode ser revisado depois da publicação; cada coleta registra URL, data e tamanho do arquivo.
 - Em janeiro de 2025 houve 89.616 registros: 86.376 realizados e 3.240 cancelados. Em fevereiro foram 78.930: 76.177 realizados e 2.753 cancelados.
 - Cancelamentos devem ser tratados separadamente de atraso de chegada. Horários reais e situação do voo constroem o alvo, mas não podem entrar nas variáveis preditoras.
@@ -164,7 +163,6 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 - **`python` abre a Microsoft Store:** use o Anaconda Prompt e confirme `conda activate mcdia-ml-voos`.
 - **CSV não encontrado:** execute `python scripts\\preparar_dados_v2.py` na raiz do projeto antes de abrir o notebook.
 - **Kernel não aparece:** execute o comando `ipykernel install` acima e reinicie o JupyterLab.
-- **Acentos aparecem quebrados no terminal:** o CSV é UTF-8; o problema é apenas a codificação de exibição do terminal.
 
 
 
