@@ -8,7 +8,7 @@ O fluxo documentado foi preparado para o Anaconda Prompt. Não execute estes com
 
 ## Pergunta inicial
 
-Um voo programado chegará com 15 minutos ou mais de atraso, ou será cancelado?
+Em qual faixa de atraso de chegada um voo programado será classificado?
 
 O primeiro recorte é retrospectivo: a base histórica da ANAC combina informações planejadas e realizadas. Antes de chamar o resultado de previsão operacional, devemos confirmar quais horários previstos estavam disponíveis antes da execução do voo.
 
@@ -62,12 +62,21 @@ Com o ambiente ativo, instale as dependências. Este bloco pode ser copiado e ex
 python -m pip install -r requirements.txt
 ```
 
-Baixe dois meses, audite os arquivos e gere o CSV derivado. Este bloco pode ser copiado e executado de uma vez:
+Baixe os 24 meses, audite os arquivos e gere o CSV derivado. Execute cada bloco separadamente:
 
 ```powershell
 python scripts\baixar_amostra.py --ano 2024 --meses 12
+```
+
+```powershell
 python scripts\baixar_amostra.py --ano 2025 --meses 12
+```
+
+```powershell
 python scripts\auditar_amostra_v2.py
+```
+
+```powershell
 python scripts\preparar_dados_v2.py
 ```
 
@@ -128,8 +137,17 @@ python -m pip install -r requirements.txt
 
 ```powershell
 python scripts\baixar_amostra.py --ano 2024 --meses 12
+```
+
+```powershell
 python scripts\baixar_amostra.py --ano 2025 --meses 12
+```
+
+```powershell
 python scripts\auditar_amostra_v2.py
+```
+
+```powershell
 python scripts\preparar_dados_v2.py
 ```
 
@@ -157,7 +175,7 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 5. No JupyterLab, navegue até `notebooks`.
 6. Abra `00_entendimento_do_dataset.ipynb` e confirme o kernel `Python (mcdia-ml-voos)`.
 
-É importante abrir o JupyterLab na raiz a raiz do projeto ou gerar a base antes de abrir o notebook. O notebook procura o diretório `data` subindo a partir da pasta de trabalho.
+É importante abrir o JupyterLab na raiz do projeto ou gerar a base antes de abrir o notebook. O notebook procura o diretório `data` subindo a partir da pasta de trabalho.
 
 ### Problemas comuns
 
@@ -175,9 +193,11 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 
 ## Preparar a base de modelagem
 
-Depois de gerar o dataset derivado, prepare a base usada no primeiro modelo.
+Depois de gerar o dataset derivado, prepare a base usada pelos modelos. Execute no Anaconda Prompt:
 
-    python scripts\preparar_modelagem.py
+```powershell
+python scripts\preparar_modelagem.py
+```
 
 O script cria localmente os arquivos de modelagem e a distribuição mensal das seis classes. Abra então o notebook notebooks/01_modelagem_faixas_atraso.ipynb. Ele usa treino de janeiro de 2024 a junho de 2025, validação de julho a setembro de 2025 e teste de outubro a dezembro de 2025.
 
@@ -186,6 +206,8 @@ O script cria localmente os arquivos de modelagem e a distribuição mensal das 
 Os resultados da primeira execução dos baselines estão em [docs/05-resultados-baseline.md](docs/05-resultados-baseline.md).
 
 A validação progressiva e a comparação com a divisão anterior estão em [docs/06-validacao-progressiva.md](docs/06-validacao-progressiva.md).
+
+O guia de algoritmos, métricas, validação temporal e execução de novas runs está em [docs/07-guia-algoritmos-e-execucao.md](docs/07-guia-algoritmos-e-execucao.md).
 
 ## Histórico das runs de treinamento
 
