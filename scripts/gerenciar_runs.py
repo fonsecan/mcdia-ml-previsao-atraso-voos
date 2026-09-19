@@ -5,6 +5,7 @@ Uso: python scripts/gerenciar_runs.py {criar,executar,importar-historico} ...
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import shutil
@@ -89,6 +90,66 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def read_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def result_record(folder: Path) -> dict:
+    """Consolida os campos necessários para comparar uma run sem ler vários arquivos."""
+    spec = yaml.safe_load((folder / "run.yaml").read_text(encoding="utf-8"))
+    manifest_path = folder / "manifest.json"
+    metrics_path = folder / "metrics.json"
+    manifest = read_json(manifest_path) if manifest_path.exists() else {}
+    metrics = read_json(metrics_path) if metrics_path.exists() else {}
+    split = spec["divisao"]
+    return {
+        "schema_version": 1,
+        "run_id": folder.name,
+        "status": manifest.get("status", "criada"),
+        "nome": spec["nome"],
+        "dataset_id": spec["dataset"]["id"],
+        "split_id": split["id"],
+        "split_nome": split["nome"],
+        "split_papel": split["papel"],
+        "modelo": spec["modelo"]["algoritmo"],
+        "preprocessamento": spec["modelo"]["preprocessamento"],
+        "accuracy": metrics.get("accuracy"),
+        "balanced_accuracy": metrics.get("balanced_accuracy"),
+        "macro_f1": metrics.get("macro_f1"),
+        "treino_linhas": manifest.get("train_rows"),
+        "avaliacao_linhas": manifest.get("evaluation_rows"),
+        "duracao_segundos": manifest.get("duration_seconds"),
+        "concluida_em_utc": manifest.get("finished_at_utc") or manifest.get("imported_at_utc"),
+        "code_commit": manifest.get("code_commit_at_execution"),
+    }
+
+
+def write_result(folder: Path) -> dict:
+    result = result_record(folder)
+    write_json(folder / "result.json", result)
+    return result
+
+
+def generate_results_and_catalog() -> None:
+    """Atualiza result.json de todas as runs e os catálogos comparativos."""
+    records = []
+    for folder in sorted((path for path in RUNS.iterdir() if path.is_dir() and path.name.isdigit()),
+                         key=lambda path: int(path.name)):
+        if (folder / "run.yaml").exists():
+            records.append(write_result(folder))
+    write_json(RUNS / "catalogo.json", {"schema_version": 1, "runs": records})
+    columns = [
+        "schema_version", "run_id", "status", "nome", "dataset_id", "split_id", "split_nome", "split_papel",
+        "modelo", "preprocessamento", "accuracy", "balanced_accuracy", "macro_f1",
+        "treino_linhas", "avaliacao_linhas", "duracao_segundos", "concluida_em_utc", "code_commit",
+    ]
+    with (RUNS / "catalogo.csv").open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=columns, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(records)
+    print(f"Atualizados {len(records)} result.json e os catálogos em runs/.")
 
 
 def github_login() -> str:
@@ -206,6 +267,7 @@ def import_historical(login: str) -> None:
             "macro_f1": row["macro_f1"],
         }
         write_json(folder / "metrics.json", metrics)
+        write_result(folder)
         (folder / "summary.md").write_text(
             f"# Run {folder.name}: {modelo} / {fold_name}\n\n"
             "Resultado importado do relatório agregado da validação progressiva. "
@@ -469,6 +531,7 @@ def execute(folder: Path) -> None:
             warnings=len(warning_lines),
         )
         write_json(folder / "manifest.json", manifest)
+        write_result(folder)
         (folder / "summary.md").write_text(
             f"# Run {folder.name}: {spec['nome']}\n\n"
             f"- Treino: {len(train)} voos\n- Avaliação: {len(evaluation)} voos\n"
@@ -483,6 +546,7 @@ def execute(folder: Path) -> None:
         log.write_text(f"{type(exc).__name__}: {exc}\n", encoding="utf-8")
         manifest.update(status="falhou", finished_at_utc=utc_now(), error=str(exc))
         write_json(folder / "manifest.json", manifest)
+        write_result(folder)
         raise
 
 
@@ -498,6 +562,7 @@ def main() -> None:
     runner = sub.add_parser("executar")
     runner.add_argument("pasta", type=Path)
     migrator = sub.add_parser("migrar-referencias-dados")
+    sub.add_parser("gerar-catalogo")
     args = parser.parse_args()
     if args.comando == "importar-historico":
         import_historical(args.github_login or github_login())
@@ -505,6 +570,8 @@ def main() -> None:
         create_from_template(args.template, args.github_login or github_login(), args.executor)
     elif args.comando == "migrar-referencias-dados":
         migrate_data_references()
+    elif args.comando == "gerar-catalogo":
+        generate_results_and_catalog()
     else:
         execute(args.pasta)
 

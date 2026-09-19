@@ -14,6 +14,7 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 | `run.effective.yaml` | Cópia congelada da configuração efetivamente executada; existe apenas nas novas runs executadas pelo gerenciador. |
 | `manifest.json` | Estado, horários, commit do código, hashes e contagens. |
 | `metrics.json` | Acurácia, balanced accuracy e macro-F1. |
+| `result.json` | Resumo plano e autocontido para comparação: dataset, divisão, modelo, métricas, tamanhos e duração. |
 | `classification_report.json` | Precisão, recall e F1 por faixa nas novas runs. |
 | `confusion_matrix.csv` | Erros entre as seis faixas nas novas runs. |
 | `summary.md` | Resumo legível do resultado. |
@@ -21,6 +22,12 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 | `execution.log` | Avisos e erros de novas runs; arquivo local, ignorado pelo Git. |
 
 O dataset grande, a atribuição de partições, modelos serializados e previsões individuais não são versionados. `run.yaml`, manifestos, métricas e resumos pequenos são versionados para permitir a leitura no GitHub. Uma pasta iniciada não é reutilizada: uma repetição recebe outro número.
+
+O comando abaixo recria `result.json` para todas as runs e os catálogos comparativos `runs/catalogo.json` e `runs/catalogo.csv`:
+
+```powershell
+python scripts\gerenciar_runs.py gerar-catalogo
+```
 
 Antes de criar uma run, materialize e verifique o dataset e a divisão referenciados. O executor confere o SHA-256 do CSV, do manifesto do dataset, do manifesto do split e da atribuição de partições. Veja [`datasets/README.md`](../datasets/README.md) e [`splits/README.md`](../splits/README.md).
 

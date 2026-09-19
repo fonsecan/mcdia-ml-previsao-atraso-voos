@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "000009",
+  "status": "importada_historicamente",
+  "nome": "fold_3-baseline",
+  "dataset_id": "dataset-000001",
+  "split_id": "split-000003",
+  "split_nome": "fold_3",
+  "split_papel": "validacao",
+  "modelo": "baseline",
+  "preprocessamento": "nenhum",
+  "accuracy": 0.6468744611139852,
+  "balanced_accuracy": 0.16666666666666666,
+  "macro_f1": 0.1309297250413821,
+  "treino_linhas": null,
+  "avaliacao_linhas": null,
+  "duracao_segundos": null,
+  "concluida_em_utc": "2026-09-19T11:49:48.171261+00:00",
+  "code_commit": null
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "000007",
+  "status": "importada_historicamente",
+  "nome": "fold_2-random_forest",
+  "dataset_id": "dataset-000001",
+  "split_id": "split-000002",
+  "split_nome": "fold_2",
+  "split_papel": "validacao",
+  "modelo": "random_forest",
+  "preprocessamento": "ordinal_todas_colunas_moda",
+  "accuracy": 0.38060778413972013,
+  "balanced_accuracy": 0.24570803136587446,
+  "macro_f1": 0.2037487576734107,
+  "treino_linhas": null,
+  "avaliacao_linhas": null,
+  "duracao_segundos": null,
+  "concluida_em_utc": "2026-09-19T11:49:48.154853+00:00",
+  "code_commit": null
+}

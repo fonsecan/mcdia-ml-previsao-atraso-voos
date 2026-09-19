@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "000008",
+  "status": "importada_historicamente",
+  "nome": "fold_2-hist_gradient_boosting",
+  "dataset_id": "dataset-000001",
+  "split_id": "split-000002",
+  "split_nome": "fold_2",
+  "split_papel": "validacao",
+  "modelo": "hist_gradient_boosting",
+  "preprocessamento": "target_encoding_multiclasse_cv5_smooth20_mediana_numericas",
+  "accuracy": 0.3667948929543252,
+  "balanced_accuracy": 0.25799498276808497,
+  "macro_f1": 0.20565598789425912,
+  "treino_linhas": null,
+  "avaliacao_linhas": null,
+  "duracao_segundos": null,
+  "concluida_em_utc": "2026-09-19T11:49:48.163366+00:00",
+  "code_commit": null
+}

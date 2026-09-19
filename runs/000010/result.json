@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "000010",
+  "status": "importada_historicamente",
+  "nome": "fold_3-regressao_logistica",
+  "dataset_id": "dataset-000001",
+  "split_id": "split-000003",
+  "split_nome": "fold_3",
+  "split_papel": "validacao",
+  "modelo": "regressao_logistica",
+  "preprocessamento": "one_hot_categoricas_mediana_numericas",
+  "accuracy": 0.3208613554061045,
+  "balanced_accuracy": 0.21776409003487449,
+  "macro_f1": 0.16855566437673494,
+  "treino_linhas": null,
+  "avaliacao_linhas": null,
+  "duracao_segundos": null,
+  "concluida_em_utc": "2026-09-19T11:49:48.177450+00:00",
+  "code_commit": null
+}

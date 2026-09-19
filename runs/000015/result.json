@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "000015",
+  "status": "importada_historicamente",
+  "nome": "teste_jul_dez_2025-random_forest",
+  "dataset_id": "dataset-000001",
+  "split_id": "split-000004",
+  "split_nome": "teste_jul_dez_2025",
+  "split_papel": "teste_final",
+  "modelo": "random_forest",
+  "preprocessamento": "ordinal_todas_colunas_moda",
+  "accuracy": 0.3837692160754773,
+  "balanced_accuracy": 0.25099738456107257,
+  "macro_f1": 0.21600163952029652,
+  "treino_linhas": null,
+  "avaliacao_linhas": null,
+  "duracao_segundos": null,
+  "concluida_em_utc": "2026-09-19T11:49:48.215708+00:00",
+  "code_commit": null
+}

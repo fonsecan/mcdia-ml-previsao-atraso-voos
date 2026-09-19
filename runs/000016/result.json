@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "run_id": "000016",
+  "status": "importada_historicamente",
+  "nome": "teste_jul_dez_2025-hist_gradient_boosting",
+  "dataset_id": "dataset-000001",
+  "split_id": "split-000004",
+  "split_nome": "teste_jul_dez_2025",
+  "split_papel": "teste_final",
+  "modelo": "hist_gradient_boosting",
+  "preprocessamento": "target_encoding_multiclasse_cv5_smooth20_mediana_numericas",
+  "accuracy": 0.3300908585049042,
+  "balanced_accuracy": 0.2532385294860693,
+  "macro_f1": 0.2009322517686893,
+  "treino_linhas": null,
+  "avaliacao_linhas": null,
+  "duracao_segundos": null,
+  "concluida_em_utc": "2026-09-19T11:49:48.224743+00:00",
+  "code_commit": null
+}
