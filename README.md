@@ -12,6 +12,8 @@ Em qual faixa de atraso de chegada um voo programado será classificado?
 
 O primeiro recorte é retrospectivo: a base histórica da ANAC combina informações planejadas e realizadas. Antes de chamar o resultado de previsão operacional, devemos confirmar quais horários previstos estavam disponíveis antes da execução do voo.
 
+O alvo atual usa seis faixas ordinais de atraso de chegada; consulte a [definição completa das categorias](README-classificacao-faixas-atraso.md).
+
 ## Fonte
 
 - [Metadados do Voo Regular Ativo (VRA)](https://www.anac.gov.br/acesso-a-informacao/dados-abertos/areas-de-atuacao/voos-e-operacoes-aereas/voo-regular-ativo-vra/62-voo-regular-ativo-vra)
