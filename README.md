@@ -29,7 +29,7 @@ O VRA contém companhia, voo, origem, destino, horários previstos e realizados 
 No Anaconda Prompt:
 
 ```powershell
-cd C:\mcdia\mcdia-ml-previsao-atraso-voos
+cd mcdia-ml-previsao-atraso-voos
 conda create --name mcdia-ml python=3.11
 conda activate mcdia-ml
 python -m pip install -r requirements.txt
@@ -70,13 +70,13 @@ Esse achado pode representar uma alteração operacional real, uma remarcação 
 2. Clone o projeto, caso ele ainda não esteja no computador:
 
 ```powershell
-git clone https://github.com/fonsecan/mcdia-ml-previsao-atraso-voos.git C:\mcdia\mcdia-ml-previsao-atraso-voos
+git clone https://github.com/fonsecan/mcdia-ml-previsao-atraso-voos.git
 ```
 
 3. Entre na pasta do projeto:
 
 ```powershell
-cd C:\mcdia\mcdia-ml-previsao-atraso-voos
+cd mcdia-ml-previsao-atraso-voos
 ```
 
 4. Crie e ative o ambiente, apenas na primeira vez:
@@ -116,10 +116,10 @@ python -m ipykernel install --user --name mcdia-ml --display-name "Python (mcdia
 2. Na aba **Environments**, crie ou selecione o ambiente `mcdia-ml` com Python 3.11.
 3. Instale as dependências listadas em `requirements.txt` no terminal do ambiente ou pelo botão de instalação.
 4. Na aba **Home**, selecione o ambiente `mcdia-ml` e clique em **Launch** no JupyterLab.
-5. No JupyterLab, navegue até `C:\mcdia\mcdia-ml-previsao-atraso-voos\notebooks`.
+5. No JupyterLab, navegue até `notebooks`.
 6. Abra `00_entendimento_do_dataset.ipynb` e confirme o kernel `Python (mcdia-ml)`.
 
-É importante abrir o JupyterLab na raiz `C:\mcdia\mcdia-ml-previsao-atraso-voos` ou gerar a base antes de abrir o notebook. O notebook procura o diretório `data` subindo a partir da pasta de trabalho.
+É importante abrir o JupyterLab na raiz a raiz do projeto ou gerar a base antes de abrir o notebook. O notebook procura o diretório `data` subindo a partir da pasta de trabalho.
 
 ### Problemas comuns
 
@@ -128,3 +128,4 @@ python -m ipykernel install --user --name mcdia-ml --display-name "Python (mcdia
 - **CSV não encontrado:** execute `python scripts\\preparar_dados_v2.py` na raiz do projeto antes de abrir o notebook.
 - **Kernel não aparece:** execute o comando `ipykernel install` acima e reinicie o JupyterLab.
 - **Acentos aparecem quebrados no terminal:** o CSV é UTF-8; o problema é apenas a codificação de exibição do terminal.
+
