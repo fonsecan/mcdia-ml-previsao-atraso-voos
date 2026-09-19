@@ -1,0 +1,53 @@
+[
+  {
+    "arquivo": "VRA_2025_01.csv",
+    "linhas": 89616,
+    "colunas": [
+      "Sigla ICAO Empresa Aérea",
+      "Empresa Aérea",
+      "Número Voo",
+      "Código DI",
+      "Código Tipo Linha",
+      "Modelo Equipamento",
+      "Número de Assentos",
+      "Sigla ICAO Aeroporto Origem",
+      "Descrição Aeroporto Origem",
+      "Partida Prevista",
+      "Partida Real",
+      "Sigla ICAO Aeroporto Destino",
+      "Descrição Aeroporto Destino",
+      "Chegada Prevista",
+      "Chegada Real",
+      "Situação Voo",
+      "Justificativa",
+      "Referência",
+      "Situação Partida",
+      "Situação Chegada",
+      "Codeshare"
+    ],
+    "duplicatas": 0,
+    "ausentes_por_coluna": {
+      "Sigla ICAO Empresa Aérea": 0,
+      "Empresa Aérea": 0,
+      "Número Voo": 0,
+      "Código DI": 0,
+      "Código Tipo Linha": 0,
+      "Modelo Equipamento": 0,
+      "Número de Assentos": 0,
+      "Sigla ICAO Aeroporto Origem": 0,
+      "Descrição Aeroporto Origem": 0,
+      "Partida Prevista": 2253,
+      "Partida Real": 3240,
+      "Sigla ICAO Aeroporto Destino": 0,
+      "Descrição Aeroporto Destino": 0,
+      "Chegada Prevista": 2253,
+      "Chegada Real": 3240,
+      "Situação Voo": 0,
+      "Justificativa": 89616,
+      "Referência": 0,
+      "Situação Partida": 5493,
+      "Situação Chegada": 5493,
+      "Codeshare": 50087
+    }
+  }
+]
