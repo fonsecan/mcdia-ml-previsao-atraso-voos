@@ -39,3 +39,13 @@ jupyter lab
 ```
 
 Os scripts registram a URL, a data de coleta e as estatísticas básicas. Eles não alteram os CSVs originais.
+
+## Desafios já identificados
+
+- Os CSVs da ANAC são UTF-8 válido. A primeira aparência de `latin1` foi causada pela exibição de acentos pelo terminal Windows, não pela codificação do arquivo.
+- O VRA é uma base mensal consolidada e pode ser revisado depois da publicação; cada coleta registra URL, data e tamanho do arquivo.
+- Em janeiro de 2025 houve 89.616 registros: 86.376 realizados e 3.240 cancelados. Em fevereiro foram 78.930: 76.177 realizados e 2.753 cancelados.
+- Cancelamentos devem ser tratados separadamente de atraso de chegada. Horários reais e situação do voo constroem o alvo, mas não podem entrar nas variáveis preditoras.
+- A auditoria encontrou registros sem horários previstos e realizados; o recorte válido do alvo precisa ser documentado antes do treinamento.
+
+Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md) e [`docs/02-correcao-codificacao.md`](docs/02-correcao-codificacao.md).
