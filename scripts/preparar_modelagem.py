@@ -13,6 +13,7 @@ FAIXAS = {
     4: "Atraso superior a 45 até 60 min",
     5: "Atraso superior a 60 min",
 }
+LIMITE_ANTECIPACAO_CHEGADA_MIN = -1440
 
 def classificar(valor: float) -> int:
     if valor <= 0:
@@ -47,7 +48,31 @@ def main() -> None:
     df["partida_prevista"] = pd.to_datetime(df["partida_prevista"], errors="coerce")
     df["realizado"] = df["realizado"].fillna(False).astype(bool)
     janela = df["partida_prevista"].between("2024-01-01", "2025-12-31 23:59:59")
-    calculavel = df["realizado"] & df["partida_prevista"].notna() & df["atraso_chegada_min"].notna() & janela
+    antecipacao_incompativel = (
+        df["atraso_chegada_min"].notna()
+        & (df["atraso_chegada_min"] < LIMITE_ANTECIPACAO_CHEGADA_MIN)
+    )
+    motivos_exclusao = pd.Series(pd.NA, index=df.index, dtype="string")
+    motivos_exclusao.loc[~df["realizado"]] = "voo não realizado"
+    motivos_exclusao.loc[
+        motivos_exclusao.isna() & df["partida_prevista"].isna()
+    ] = "partida prevista inválida"
+    motivos_exclusao.loc[
+        motivos_exclusao.isna() & df["atraso_chegada_min"].isna()
+    ] = "atraso de chegada ausente"
+    motivos_exclusao.loc[
+        motivos_exclusao.isna() & antecipacao_incompativel
+    ] = "antecipação incompatível"
+    motivos_exclusao.loc[
+        motivos_exclusao.isna() & ~janela
+    ] = "fora da janela temporal"
+    calculavel = (
+        df["realizado"]
+        & df["partida_prevista"].notna()
+        & df["atraso_chegada_min"].notna()
+        & ~antecipacao_incompativel
+        & janela
+    )
     df = df.loc[calculavel].copy()
     df["faixa_atraso"] = df["atraso_chegada_min"].map(classificar).astype("int8")
     dt = df["partida_prevista"]
@@ -88,9 +113,21 @@ def main() -> None:
     print(f"Linhas de entrada: {input_rows}")
     print(f"Linhas elegíveis: {len(modelagem)}")
     print(f"Linhas não elegíveis: {input_rows - len(modelagem)}")
+    print("Linhas removidas por motivo (cada linha contabilizada uma única vez):")
+    ordem_motivos = [
+        "voo não realizado",
+        "partida prevista inválida",
+        "atraso de chegada ausente",
+        "antecipação incompatível",
+        "fora da janela temporal",
+    ]
+    contagem_motivos = motivos_exclusao.value_counts().reindex(ordem_motivos, fill_value=0)
+    for motivo, quantidade in contagem_motivos.items():
+        print(f"- {motivo}: {quantidade}")
     print(
         "Critérios de elegibilidade: voo realizado, partida prevista válida, "
-        "atraso de chegada calculável e período entre 2024-01-01 e 2025-12-31."
+        f"atraso de chegada calculável >= {LIMITE_ANTECIPACAO_CHEGADA_MIN} minutos "
+        "e período entre 2024-01-01 e 2025-12-31."
     )
     excluded_columns = [column for column in input_columns if column not in features]
     created_columns = [column for column in features if column not in input_columns]
