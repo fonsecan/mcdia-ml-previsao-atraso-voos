@@ -4,7 +4,7 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 
 ## Identidade de quem executou
 
-`executado_por.github_login` identifica o login autenticado no GitHub. `executado_por.executor` distingue execução manual de execução pelo Codex. Nas 16 runs históricas, o login `fonsecan` foi confirmado com `gh api user` na importação, e o executor foi o Codex. Não há registro do login da sessão original de treinamento. O login identifica a conta responsável pelo ambiente; não afirma que o usuário treinou o modelo manualmente.
+`executado_por.github_login` identifica o login autenticado no GitHub. `executado_por.executor` distingue execução manual de execução pelo Codex. O login identifica a conta responsável pelo ambiente; não afirma que o usuário treinou o modelo manualmente.
 
 ## Arquivos
 
@@ -23,7 +23,7 @@ Cada pasta numerada representa **um modelo treinado e avaliado em uma janela tem
 
 O dataset grande, a atribuição de partições, modelos serializados e previsões individuais não são versionados. `run.yaml`, manifestos, métricas e resumos pequenos são versionados para permitir a leitura no GitHub. Uma pasta iniciada não é reutilizada: uma repetição recebe outro número.
 
-O comando abaixo recria `result.json` para todas as runs e os catálogos comparativos `runs/catalogo.json` e `runs/catalogo.csv`:
+O comando abaixo recria `result.json` para as runs reproduzíveis ativas e os catálogos comparativos `runs/catalogo.json` e `runs/catalogo.csv`:
 
 ```powershell
 python scripts\gerenciar_runs.py gerar-catalogo
@@ -31,16 +31,9 @@ python scripts\gerenciar_runs.py gerar-catalogo
 
 Antes de criar uma run, materialize e verifique o dataset e a divisão referenciados. O executor confere o SHA-256 do CSV, do manifesto do dataset, do manifesto do split e da atribuição de partições. Veja [`datasets/README.md`](../datasets/README.md) e [`splits/README.md`](../splits/README.md).
 
-## As 16 runs históricas
+## Histórico legado
 
-| Janela | Baseline | Regressão logística | Random Forest | HistGradientBoosting |
-|---|---:|---:|---:|---:|
-| Validação out–dez/2024 | `000001` | `000002` | `000003` | `000004` |
-| Validação jan–mar/2025 | `000005` | `000006` | `000007` | `000008` |
-| Validação abr–jun/2025 | `000009` | `000010` | `000011` | `000012` |
-| Teste jul–dez/2025 | `000013` | `000014` | `000015` | `000016` |
-
-Essas pastas foram **importadas** do resultado agregado preservado em `runs/historico/validacao_progressiva_2024_2025.json`. A configuração foi reconstruída do script original de avaliação. Os notebooks históricos são reproduções disponíveis, mas não foram executados durante a importação. Não foram registrados individualmente na época: horário da execução, duração, hash do dataset, logs, relatórios por classe e matrizes de confusão. Os manifestos deixam esses campos vazios; não representam uma nova execução.
+As 16 runs importadas anteriormente foram preservadas em [`legacy/validacao_progressiva_2024_2025/`](legacy/validacao_progressiva_2024_2025/). Elas servem somente para consulta e não participam da numeração, do catálogo ou das comparações das novas execuções reproduzíveis.
 
 ## Criar e executar uma nova run
 
@@ -52,10 +45,10 @@ Crie uma definição a partir do exemplo:
 python scripts\gerenciar_runs.py criar runs\exemplos\run.yaml
 ```
 
-O comando informa o número criado. Revise o respectivo `run.yaml` e execute a pasta criada; substitua `000017` pelo número mostrado:
+O comando informa o número criado. Como a sequência ativa foi reiniciada, a primeira run reproduzível será `000001`. Revise o respectivo `run.yaml` e execute a pasta criada:
 
 ```powershell
-python scripts\gerenciar_runs.py executar runs\000017
+python scripts\gerenciar_runs.py executar runs\000001
 ```
 
 O executor confere se o login autenticado no `gh` corresponde ao `run.yaml`, congela a definição, confere o dataset e split registrados, registra o commit do código, treina com as partições congeladas, avalia as seis classes e escreve os artefatos. A configuração de exemplo usa a primeira janela e Random Forest; para usar outra janela, crie uma nova divisão versionada em `splits/`.

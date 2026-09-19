@@ -382,4 +382,4 @@ O guia de algoritmos, métricas, validação temporal e execução de novas runs
 
 ## Histórico das runs de treinamento
 
-As 16 combinações de modelo e janela da validação progressiva foram importadas para pastas numeradas em `runs/`. Cada pasta contém sua definição, manifesto, métricas e resumo. Consulte [runs/README.md](runs/README.md) para entender os arquivos e criar novas runs.
+As 16 combinações históricas de modelo e janela da validação progressiva estão preservadas em `runs/legacy/validacao_progressiva_2024_2025/`. As novas runs reproduzíveis recomeçam em `runs/000001`. Consulte [runs/README.md](runs/README.md) para entender os arquivos e criar novas runs.

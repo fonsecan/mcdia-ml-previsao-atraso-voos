@@ -105,7 +105,7 @@ No JupyterLab, abra `runs/000017/run.ipynb`. O notebook é gerado a partir do me
 
 ## Runs históricas
 
-As runs `000001` a `000016` foram reconstruídas a partir do resultado agregado da validação progressiva. Elas preservam a configuração e as métricas conhecidas, mas não têm logs, duração ou hash individual do dataset da execução original. Seus notebooks são reproduções disponíveis, não evidências de uma nova execução.
+As runs `000001` a `000016` reconstruídas a partir do resultado agregado da validação progressiva foram preservadas em `runs/legacy/validacao_progressiva_2024_2025/`. Elas servem para consulta e não participam da sequência de runs reproduzíveis, que recomeça em `runs/000001`.
 
 ## Arquivos gerados
 

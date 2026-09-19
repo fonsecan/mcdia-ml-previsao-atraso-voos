@@ -1,6 +1,6 @@
-"""Cria, executa, importa e migra runs individuais de modelagem.
+"""Cria e executa runs reproduzíveis de modelagem.
 
-Uso: python scripts/gerenciar_runs.py {criar,executar,importar-historico} ...
+Uso: python scripts/gerenciar_runs.py {criar,executar,gerar-catalogo} ...
 """
 from __future__ import annotations
 
@@ -23,7 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 DATASETS = ROOT / "datasets"
 SPLITS = ROOT / "splits"
-HISTORICO = RUNS / "historico" / "validacao_progressiva_2024_2025.json"
+LEGACY = RUNS / "legacy" / "validacao_progressiva_2024_2025"
+HISTORICO = LEGACY / "historico" / "validacao_progressiva_2024_2025.json"
 NOTEBOOK_TEMPLATE = ROOT / "notebooks" / "templates" / "modelagem_run.ipynb"
 CLASSES = list(range(6))
 FEATURES_CATEGORICAS = [
@@ -278,7 +279,7 @@ def import_historical(login: str) -> None:
             f"- Macro-F1: {metrics['macro_f1']:.4f}\n",
             encoding="utf-8",
         )
-    print("16 runs históricas importadas em runs/000001 a runs/000016.")
+    print("16 runs históricas importadas em runs/legacy/validacao_progressiva_2024_2025/.")
 
 
 def create_from_template(template: Path, login: str, executor: str) -> None:
