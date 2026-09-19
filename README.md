@@ -2,6 +2,10 @@
 
 POC de exploração de dados públicos da Agência Nacional de Aviação Civil (ANAC) para investigar se é possível prever, com antecedência definida, atrasos e cancelamentos de etapas de voos regulares.
 
+**ATENÇÃO — abra o _Anaconda Prompt_ antes de executar qualquer comando deste README.**
+
+O fluxo documentado foi preparado para o Anaconda Prompt. Não execute estes comandos no PowerShell comum ou no Prompt de Comando.
+
 ## Pergunta inicial
 
 Um voo programado chegará com 15 minutos ou mais de atraso, ou será cancelado?
@@ -128,4 +132,5 @@ python -m ipykernel install --user --name mcdia-ml --display-name "Python (mcdia
 - **CSV não encontrado:** execute `python scripts\\preparar_dados_v2.py` na raiz do projeto antes de abrir o notebook.
 - **Kernel não aparece:** execute o comando `ipykernel install` acima e reinicie o JupyterLab.
 - **Acentos aparecem quebrados no terminal:** o CSV é UTF-8; o problema é apenas a codificação de exibição do terminal.
+
 
