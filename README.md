@@ -47,13 +47,13 @@ cd mcdia-ml-previsao-atraso-voos
 Na primeira execução, crie o ambiente. Este comando é interativo: quando o Conda perguntar se deseja prosseguir, digite `y` e pressione Enter. Aguarde a conclusão antes de continuar:
 
 ```powershell
-conda create --name mcdia-ml python=3.11
+conda create --name mcdia-ml-voos python=3.11
 ```
 
 Ative o ambiente:
 
 ```powershell
-conda activate mcdia-ml
+conda activate mcdia-ml-voos
 ```
 
 Com o ambiente ativo, instale as dependências. Este bloco pode ser copiado e executado de uma vez:
@@ -119,8 +119,8 @@ cd mcdia-ml-previsao-atraso-voos
 4. Crie e ative o ambiente, apenas na primeira vez:
 
 ```powershell
-conda create --name mcdia-ml python=3.11
-conda activate mcdia-ml
+conda create --name mcdia-ml-voos python=3.11
+conda activate mcdia-ml-voos
 python -m pip install -r requirements.txt
 ```
 
@@ -139,10 +139,10 @@ jupyter lab
 ```
 
 7. No navegador, abra `notebooks\00_entendimento_do_dataset.ipynb`.
-8. No canto superior direito, selecione o kernel do ambiente `mcdia-ml`. Se ele não aparecer, execute no Anaconda Prompt:
+8. No canto superior direito, selecione o kernel do ambiente `mcdia-ml-voos`. Se ele não aparecer, execute no Anaconda Prompt:
 
 ```powershell
-python -m ipykernel install --user --name mcdia-ml --display-name "Python (mcdia-ml)"
+python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (mcdia-ml-voos)"
 ```
 
 9. Execute as células na ordem com `Shift + Enter` ou use **Run → Run All Cells**.
@@ -150,21 +150,22 @@ python -m ipykernel install --user --name mcdia-ml --display-name "Python (mcdia
 ### Opção gráfica: Anaconda Navigator
 
 1. Abra o **Anaconda Navigator**.
-2. Na aba **Environments**, crie ou selecione o ambiente `mcdia-ml` com Python 3.11.
+2. Na aba **Environments**, crie ou selecione o ambiente `mcdia-ml-voos` com Python 3.11.
 3. Instale as dependências listadas em `requirements.txt` no terminal do ambiente ou pelo botão de instalação.
-4. Na aba **Home**, selecione o ambiente `mcdia-ml` e clique em **Launch** no JupyterLab.
+4. Na aba **Home**, selecione o ambiente `mcdia-ml-voos` e clique em **Launch** no JupyterLab.
 5. No JupyterLab, navegue até `notebooks`.
-6. Abra `00_entendimento_do_dataset.ipynb` e confirme o kernel `Python (mcdia-ml)`.
+6. Abra `00_entendimento_do_dataset.ipynb` e confirme o kernel `Python (mcdia-ml-voos)`.
 
 É importante abrir o JupyterLab na raiz a raiz do projeto ou gerar a base antes de abrir o notebook. O notebook procura o diretório `data` subindo a partir da pasta de trabalho.
 
 ### Problemas comuns
 
 - **`conda` não é reconhecido:** use o Anaconda Prompt, não o PowerShell comum.
-- **`python` abre a Microsoft Store:** use o Anaconda Prompt e confirme `conda activate mcdia-ml`.
+- **`python` abre a Microsoft Store:** use o Anaconda Prompt e confirme `conda activate mcdia-ml-voos`.
 - **CSV não encontrado:** execute `python scripts\\preparar_dados_v2.py` na raiz do projeto antes de abrir o notebook.
 - **Kernel não aparece:** execute o comando `ipykernel install` acima e reinicie o JupyterLab.
 - **Acentos aparecem quebrados no terminal:** o CSV é UTF-8; o problema é apenas a codificação de exibição do terminal.
+
 
 
 
