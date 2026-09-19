@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shlex
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -66,9 +67,20 @@ def load_definition(folder: Path) -> dict:
     return definition
 
 
-def run(command: list[str]) -> None:
-    print("+", " ".join(command))
-    subprocess.run(command, cwd=ROOT, check=True)
+def run(command: list[str], command_log: Path) -> None:
+    rendered = shlex.join(command)
+    started = utc_now()
+    print("+", rendered)
+    with command_log.open("a", encoding="utf-8") as stream:
+        stream.write(f"[{started}] START {rendered}\n")
+    try:
+        subprocess.run(command, cwd=ROOT, check=True)
+    except subprocess.CalledProcessError as error:
+        with command_log.open("a", encoding="utf-8") as stream:
+            stream.write(f"[{utc_now()}] FAIL returncode={error.returncode} {rendered}\n")
+        raise
+    with command_log.open("a", encoding="utf-8") as stream:
+        stream.write(f"[{utc_now()}] OK {rendered}\n")
 
 
 def files_in_raw(raw: Path, definition: dict) -> list[dict]:
@@ -102,6 +114,12 @@ def materialize(dataset_id: str) -> None:
         )
     artifacts = definition["artefatos"]
     raw = folder / artifacts["bruto"]
+    command_log = folder / "commands.log"
+    command_log.write_text(
+        f"# Comandos executados para materializar {dataset_id}\n"
+        f"[{utc_now()}] START {shlex.join([sys.executable, *sys.argv])}\n",
+        encoding="utf-8",
+    )
     raw.mkdir(parents=True, exist_ok=True)
     for collection in definition["coletas"]:
         run([
@@ -109,7 +127,7 @@ def materialize(dataset_id: str) -> None:
             "--meses", str(collection["meses"]), "--output-dir",
             str(raw.relative_to(ROOT)), "--metadata-output",
             str((folder / f"download_{collection['ano']}.json").relative_to(ROOT)),
-        ])
+        ], command_log)
     audit = folder / artifacts["auditoria"]
     derived = folder / artifacts["derivado"]
     modeling = folder / artifacts["modelagem"]
@@ -117,15 +135,17 @@ def materialize(dataset_id: str) -> None:
     run([
         sys.executable, "scripts/auditar_amostra_v2.py", "--input-dir", str(raw.relative_to(ROOT)),
         "--output", str(audit.relative_to(ROOT)),
-    ])
+    ], command_log)
     run([
         sys.executable, "scripts/preparar_dados_v2.py", "--input-dir", str(raw.relative_to(ROOT)),
         "--output", str(derived.relative_to(ROOT)),
-    ])
+    ], command_log)
     run([
         sys.executable, "scripts/preparar_modelagem.py", "--input", str(derived.relative_to(ROOT)),
         "--output", str(modeling.relative_to(ROOT)), "--monthly-output", str(monthly.relative_to(ROOT)),
-    ])
+    ], command_log)
+    with command_log.open("a", encoding="utf-8") as stream:
+        stream.write(f"[{utc_now()}] OK materialização concluída\n")
     raw_files = files_in_raw(raw, definition)
     generated = {
         name: {
@@ -150,6 +170,7 @@ def materialize(dataset_id: str) -> None:
         "definition_sha256": sha256(folder / "dataset.yaml"),
         "receita": "receita.sh",
         "receita_sha256": sha256(folder / "receita.sh"),
+        "comandos": {"path": "commands.log", "sha256": sha256(command_log)},
         "code_commit": git_commit(),
         "python_version": sys.version.split()[0],
         "pandas_version": pd.__version__,
@@ -183,6 +204,9 @@ def verify(dataset_id: str) -> None:
         failures.append("dataset.yaml")
     if sha256(folder / "receita.sh") != manifest.get("receita_sha256"):
         failures.append("receita.sh")
+    command_log = folder / manifest.get("comandos", {}).get("path", "commands.log")
+    if not command_log.exists() or sha256(command_log) != manifest.get("comandos", {}).get("sha256"):
+        failures.append("commands.log")
     if failures:
         raise ValueError("Hash divergente ou arquivo ausente: " + ", ".join(failures))
     print(f"Dataset {dataset_id} verificado com sucesso.")

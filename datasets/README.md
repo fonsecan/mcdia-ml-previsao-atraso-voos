@@ -15,7 +15,8 @@ Ao materializar, o gerenciador:
 3. audita os arquivos brutos;
 4. gera o dataset derivado;
 5. gera a base de modelagem, incluindo a coluna-alvo `faixa_atraso`;
-6. cria `manifest.json` e `checksums.sha256` com os hashes dos dados e dos scripts usados.
+6. cria `commands.log` com todos os comandos executados, horários e códigos de retorno;
+7. cria `manifest.json` e `checksums.sha256` com os hashes dos dados e dos scripts usados. O manifesto também registra o hash de `commands.log`.
 
 Para materializar a primeira versão:
 
