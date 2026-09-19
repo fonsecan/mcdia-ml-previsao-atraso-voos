@@ -85,7 +85,7 @@ Os scripts registram a URL, a data da coleta e as estatísticas básicas. Eles n
 - Cancelamentos devem ser tratados separadamente de atraso de chegada. Horários reais e situação do voo constroem o alvo, mas não podem entrar nas variáveis preditoras.
 - A auditoria encontrou registros sem horários previstos e realizados; o recorte válido do alvo precisa ser documentado antes do treinamento.
 
-Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md) e [`docs/02-correcao-codificacao.md`](docs/02-correcao-codificacao.md).
+Detalhes: [`docs/01-desafios-auditoria.md`](docs/01-desafios-auditoria.md).
 
 ## Dataset derivado inicial
 
@@ -165,6 +165,7 @@ python -m ipykernel install --user --name mcdia-ml-voos --display-name "Python (
 - **CSV não encontrado:** execute `python scripts\\preparar_dados_v2.py` na raiz do projeto antes de abrir o notebook.
 - **Kernel não aparece:** execute o comando `ipykernel install` acima e reinicie o JupyterLab.
 - **Acentos aparecem quebrados no terminal:** o CSV é UTF-8; o problema é apenas a codificação de exibição do terminal.
+
 
 
 
