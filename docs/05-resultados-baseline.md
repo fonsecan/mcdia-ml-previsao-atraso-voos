@@ -41,3 +41,17 @@ Mesmo com 300 iterações, a regressão logística apresentou aviso de não conv
 A codificação one-hot de rotas, aeroportos e equipamentos produz muitas variáveis. O próximo experimento deve testar um modelo baseado em árvores e uma estratégia ordinal ou hierárquica, mantendo a mesma divisão temporal.
 
 O resultado foi gerado por scripts/avaliar_baselines.py e salvo localmente em artifacts/resultados_baselines.json.
+
+## Random Forest
+
+O Random Forest foi avaliado com codificação ordinal das variáveis categóricas, 100 árvores, profundidade máxima 20 e pesos balanceados.
+
+| Modelo | Acurácia | Balanced accuracy | Macro-F1 |
+|---|---:|---:|---:|
+| Classe majoritária | 0,5825 | 0,1667 | 0,1227 |
+| Regressão logística balanceada | 0,2071 | 0,2150 | 0,1503 |
+| Random Forest balanceado | 0,3087 | 0,2367 | 0,1969 |
+
+O Random Forest apresentou o melhor balanced accuracy e macro-F1 entre os modelos testados até agora. A acurácia continua abaixo do baseline majoritário porque o modelo tenta identificar as classes menos frequentes.
+
+A codificação ordinal impõe uma ordem numérica artificial às categorias de aeroportos e companhias. Portanto, este resultado é uma referência inicial. Um próximo experimento deve avaliar uma codificação mais apropriada para categorias ou um modelo especializado em dados categóricos.
